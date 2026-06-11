@@ -103,6 +103,10 @@ docker logs navidrome -f      # Tail Navidrome logs
 docker compose -f ~/docker/navidrome/compose.yaml up -d  # Start Navidrome
 sudo tailscale funnel status  # Check Tailscale Funnel status
 sudo tailscale funnel --bg <port>  # Expose a port via Funnel (background)
+sudo tailscale serve status   # Check path-based serve routes
+sudo tailscale serve --bg --set-path /path http://localhost:PORT # Add path route
+docker compose -f ~/docker/uptime-kuma/compose.yaml up -d  # Start Uptime Kuma
+docker compose -f ~/docker/sync/compose.yaml up -d  # Start Syncthing
 ```
 
 ## NOTES
