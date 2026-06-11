@@ -1,34 +1,41 @@
 # Handoff — M4600 Home Server
 
-**Date:** 2026-06-11 (updated)
+**Date:** 2026-06-11 (refactored)
 **Server:** danko@192.168.1.200
-**User:** danko (in docker group, no sudo password needed for docker)
+**User:** danko (in docker + sudo groups)
+**Refer to:** [AGENTS.md](AGENTS.md) for full KB, [m4600-server-setup.md](m4600-server-setup.md) for plan index
 
 ---
 
-## LAST SESSION SUMMARY
+## 1. Last Session
 
-This session covered:
-- **Tailscale Funnel** set up for Navidrome (root at .ts.net)
-- **Navidrome** deployed, Docker Compose, admin created, music synced
-- **Syncthing** deployed (Docker, host networking), syncs music from PC to /mnt/media/music (Receive Only)
-- **Uptime Kuma** deployed at port 3001 (monitors not yet configured)
-- **Dockge** path fixed — now correctly scans /home/danko/docker/
-- **Tailscale Serve** tried for path-based routing (Navidrome + Pi-hole + Uptime Kuma under one Funnel) but reverted — single-service Funnel simpler for now
-- Rsync used to copy music from PC (192.168.1.14) to server
-- Git history cleaned: 5 commits with full attribution
+**Date:** 2026-06-11
+**Summary:** Documentation refactor — unified task IDs, corrected OS to Ubuntu Server 26.04, added Vietnam purchase guide, restructured AGENTS.md/HANDOFF.md/m4600-server-setup.md into non-overlapping roles.
 
-### Decisions Made
-- Skipped Jellyfin — Sandy Bridge iGPU too weak for HEVC/4K (H.264 only)
-- Skipped Cloudflare Tunnel — no domain; Tailscale Funnel fills the need
-- Uptime Kuma stays internal (no Funnel) — monitoring dashboard doesn't need public access
-- Pi-hole not on Funnel — reverted during serve experiment
+**Decisions:**
+- AGENTS.md = single source of truth for KB, progress, roadmap
+- m4600-server-setup.md = thin master plan index only
+- HANDOFF.md = session context + pending tasks + decision log
+- All task references now use unified IDs (BK-01, NW-01, etc.) across all files
 
 ---
 
-## CURRENT STATE
+## 2. Session Log
 
-### Working
+| Date | Summary | Key Decisions | State Change |
+|------|---------|---------------|--------------|
+| 2026-06-11 | Docs refactored | AGENTS.md/HANDOFF.md/m4600-setup.md restructured; unified task IDs created | Docs cleaned |
+| 2026-06-11 (earlier) | Uptime Kuma deployed at :3001 | Kept internal (no Funnel) | New service: Uptime Kuma |
+| 2026-06-11 (earlier) | Syncthing deployed, host networking | Receive Only for music sync from PC | New service: Syncthing |
+| 2026-06-11 (earlier) | Navidrome deployed at :4533 | Funnel at root path via `--bg` | New service: Navidrome |
+| 2026-06-11 (earlier) | Tailscale Funnel set up | Root path for Navidrome, no auth | Public access |
+| 2026-06-11 (earlier) | Dockge path fixed | Scans ~/docker/ correctly | Fix |
+
+---
+
+## 3. Current State
+
+### ✅ Working
 - LVM: vg_data with lv_storage (200G, /mnt/media) + data_lv (247G, /mnt/data)
 - Samba: [media] and [data] shares at /mnt/media and /mnt/data
 - Docker CE + docker-compose-plugin + containerd.io
@@ -49,106 +56,64 @@ This session covered:
   - Pi-hole Funnel was removed during serve experiment — currently local-only at :8080/admin
 - Uptime Kuma at port 3001 (monitoring dashboard)
 
-### Not Working / Issues
+### ❌ Not Working / Issues
 - **Phone (Pixel) DNS bypass** — Private DNS (DoT) + IPv6 causes Pixel to bypass Pi-hole. Known issue, needs router-level DNS config or UFW rule to force all DNS through Pi-hole.
 - **Viettel router DNS not set** — Router DHCP still uses ISP DNS. Needs ISP DNS turned OFF, Primary DNS set to 192.168.1.200.
 - Pi-hole network table still shows stale 172.19.0.x entries from old Docker bridge mode (harmless).
 
 ---
 
-## STACKS ON DISK
+## 4. Stack on Disk
 
 All in `~/docker/<service>/` with `compose.yaml`:
 
-| Directory | Service |
-|-----------|---------|
-| `~/docker/pihole/` | Pi-hole + Unbound |
-| `~/docker/navidrome/` | Navidrome (port 4533) |
-| `~/docker/sync/` | Syncthing (port 8384 host) |
-| `~/docker/uptime-kuma/` | Uptime Kuma (port 3001) |
+| Directory | Service | Port |
+|-----------|---------|------|
+| `~/docker/pihole/` | Pi-hole + Unbound | 53, 8080 |
+| `~/docker/navidrome/` | Navidrome (music) | 4533 |
+| `~/docker/sync/` | Syncthing (file sync) | 8384 host |
+| `~/docker/uptime-kuma/` | Uptime Kuma (monitoring) | 3001 |
 
 ---
 
-## PI-HOLE DETAILS
+## 5. Pending Tasks
 
-**Compose:** Uses `network_mode: host`, not bridge.
-**Key environment:**
-- `FTLCONF_webserver_port: "8080o"` — keeps admin on :8080 despite host networking
-- `FTLCONF_dns_upstreams: "127.0.0.1#5335"` — points to Unbound
-- `FTLCONF_dns_listeningMode: "all"`
-
-**Unbound config:** `~/docker/pihole/unbound/` mounted to `/etc/unbound/custom.conf.d/` (drop-in style). Listens on port 5335.
-
-**Adding blocklists:** Use dashboard at /admin or API. Old `pihole -a adlist` removed in v6.
-
----
-
-## PENDING TASKS
-
-### 🔴 CRITICAL — Do First
-- [ ] 5.3 Backup strategy (restic + cron) — data unprotected, #1 priority
-- [ ] 9.3b Configure Uptime Kuma monitors (Pi-hole, Navidrome, Syncthing, SSH, DNS)
-
-### 🟡 HIGH PRIORITY — Next Sessions
-- [ ] 7.2 Pi-hole router DNS config — fix Pixel bypass, set router DHCP to 192.168.1.200
-- [ ] 8.4 Gitea — self-hosted git server (~80MB RAM)
-- [ ] Security hardening — fail2ban for SSH brute-force protection (~10MB RAM)
-
-### 🟢 MEDIUM PRIORITY — When Ready
-- [ ] Homer Dashboard — single-page dashboard for all services (~5MB RAM)
-- [ ] 8.3 ARM — Automated CD ripping (if you have CDs)
-- [ ] 8.2 Pelican — Minecraft server (if you play)
-
-### ⚪ DEFERRED — Hardware Upgrade Required
-- [ ] RAM upgrade to 16-32GB — DDR3 cheap ($20-40), enables Ollama, Immich
-- [ ] Ethernet cable — $5 for reliable gigabit
-- [ ] 2.5GbE ExpressCard — ~$25 for network speed boost
-
-### ⚪ DROP/DEFER — Redundant or Low Value
-- [ ] 7.3 WireGuard VPN — Tailscale already provides mesh VPN
-- [ ] 7.4 Cloudflare Tunnel — Tailscale Funnel fills the need
-- [ ] 9.5 Smart Card — niche, low practical value
-- [ ] 9.4 KSM — marginal on 8GB, wait for RAM upgrade
+| Priority | ID | Description | Phase | Depends On |
+|----------|----|-------------|-------|------------|
+| 🔴 Critical | **BK-01** | Set up restic + cron backup (data unprotected, #1 priority) | 5.3 | — |
+| 🔴 Critical | **BK-02** | Configure Uptime Kuma monitors (Pi-hole, Navidrome, Syncthing, SSH, DNS) | 9.3b | BK-01 |
+| 🟡 High | **NW-01** | Set router DHCP DNS to 192.168.1.200 (fix Pixel bypass) | 7.2 | — |
+| 🟡 High | **SV-01** | Deploy Gitea (~80MB RAM) | 8.4 | Docker ready |
+| 🟡 High | **SC-01** | Install fail2ban for SSH protection (~10MB) | — | — |
+| 🟡 High | **MT-01** | Configure SMART monitoring (smartmontools) | — | — |
+| 🟡 High | **MT-02** | Set journald size limit (500MB) | — | — |
+| 🟡 High | **MT-03** | Enable unattended-upgrades (auto security) | — | — |
+| 🟡 High | **MT-04** | Add Docker resource limits to all compose.yaml | — | — |
+| 🟢 Medium | **SV-02** | Deploy Homer dashboard (~5MB) | — | BK-01, BK-02 |
+| 🟢 Medium | **NW-02** | IPv6 DNS config (fix Pixel DoT) | — | NW-01 |
+| 🟢 Medium | **AU-01** | Ansible config management | 9.1 | — |
+| 🟢 Medium | **AU-02** | Docker volume backup script | 9.2 | BK-01 |
+| 🟢 Medium | **SV-03** | Deploy Diun (Docker update notifier) | — | — |
+| ⚪ Hardware | **HW-01** | RAM upgrade 16-32GB | — | Purchase |
+| ⚪ Hardware | **HW-02** | Ethernet cable Cat 6 | — | Purchase |
+| ⚪ Hardware | **HW-03** | Wi-Fi card Intel AC 7260HMW | — | Purchase |
+| ⚪ Deferred | HW-04/HW-05/HW-06 | Thermal paste, caddy, UPS | — | Purchase |
 
 ---
 
-## NAVIDROME DETAILS
+## 6. Decision Log
 
-**Compose:** `~/docker/navidrome/compose.yaml`, bridge networking, `user: 1000:1000`.
-**Port:** 4533 → 4533
-**Music path:** `/mnt/media/music` mounted as `/music:ro` in container.
-**Config:** Environment variables set via compose (no config file). `ND_SCANSCHEDULE` can be added for auto-scan.
-**Funnel:** `sudo tailscale funnel --bg 4533` — accessible at `https://danko-m4600.tail81e74b.ts.net/`
-**Restart:** `docker restart navidrome` forces a rescan.
-**Logs:** `docker logs navidrome -f --tail 30`
-
----
-
-## SYNCTHING DETAILS
-
-**Compose:** `~/docker/sync/compose.yaml`, `network_mode: host`, `user: 1000:1000`.
-**Web UI:** `http://192.168.1.200:8384`
-**Music folder:** Container path `/media/music` (host `/mnt/media/music`), set to **Receive Only**.
-**Additional folders:** Mount at `/media` for `/mnt/media/*` or `/data` for `/mnt/data/*`.
-**Config dir:** `~/docker/sync/data/`
-**Across internet:** Works out of the box — global discovery + relay servers, no VPN needed.
+| Date | Decision | Rationale | Alternatives Considered |
+|------|----------|-----------|------------------------|
+| 2026-06-11 | Skipped Jellyfin | Sandy Bridge iGPU too weak for HEVC/4K (H.264 only) | Consider Intel Arc A310 for transcoding |
+| 2026-06-11 | Skipped Cloudflare Tunnel | No domain; Tailscale Funnel fills the need | — |
+| 2026-06-11 | Uptime Kuma stays internal | Monitoring dashboard doesn't need public access | Could use Tailscale Funnel |
+| 2026-06-11 | Pi-hole not on Funnel | Reverted during serve experiment | — |
+| 2026-06-11 | Docs: AGENTS.md = KB, HANDOFF.md = session | Non-overlapping roles for clarity | Single giant file (messy) |
 
 ---
 
-## TAILSCALE FUNNEL / SERVE NOTES
-
-- `sudo tailscale funnel --bg <port>` — expose a port publicly
-- `sudo tailscale funnel status` — check active funnels
-- `sudo tailscale serve status` — check path-based routes
-- `sudo tailscale serve --bg --set-path /path http://127.0.0.1:PORT` — add path route
-- `sudo tailscale serve --https=443 /path off` — remove a path
-- `sudo tailscale funnel 8080 off` — remove a funnel
-- Funnel is per-port, not per-path. Path-based routing via `serve` (but Funnel makes ALL paths public)
-- Multiple `--bg` funnels can run simultaneously on different ports
-
----
-
-## CONSTRAINTS
+## 7. Constraints
 
 - 8GB RAM primary bottleneck — add services incrementally
 - Quadro 1000M Fermi GPU: no 2026 drivers, skip entirely
@@ -157,4 +122,4 @@ All in `~/docker/<service>/` with `compose.yaml`:
 - Two IPs on wlp3s0: static 192.168.1.200 + DHCP 192.168.1.7 (DHCP lease can be released)
 - No Ubuntu snaps — all packages via apt
 - No Ubuntu Pro
-- Host runs EndeavourOS (Arch-based), not Ubuntu Server
+- Host runs Ubuntu Server 26.04 LTS (headless)
