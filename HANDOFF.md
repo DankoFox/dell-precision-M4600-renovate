@@ -25,7 +25,8 @@
 - Fan management: dell-bios-fan-control + i8kmon
 - Navidrome at port 4533 (music streaming, reads /mnt/media/music)
 - Syncthing at port 8384 (host networking, syncs music from PC to /mnt/media/music, Receive Only)
-- Tailscale Funnel exposing Pi-hole at https://danko-m4600.tail81e74b.ts.net/admin and Navidrome at https://danko-m4600.tail81e74b.ts.net/
+- Tailscale Funnel exposing Navidrome at https://danko-m4600.tail81e74b.ts.net/ (--bg persistent)
+- Uptime Kuma at port 3001 (monitoring dashboard)
 
 ### Not Working / Issues
 - **Phone (Pixel) DNS bypass** — Private DNS (DoT) + IPv6 causes Pixel to bypass Pi-hole. Known issue, needs router-level DNS config or UFW rule to force all DNS through Pi-hole.
@@ -43,6 +44,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | `~/docker/pihole/` | Pi-hole + Unbound |
 | `~/docker/navidrome/` | Navidrome (port 4533) |
 | `~/docker/sync/` | Syncthing (port 8384 host) |
+| `~/docker/uptime-kuma/` | Uptime Kuma (port 3001) |
 
 ---
 
@@ -84,7 +86,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 ### Phase 9
 - [ ] 9.1 Ansible — configuration management
 - [ ] 9.2 Docker backup scripts
-- [ ] 9.3 Uptime Kuma or similar monitoring
+- [x] 9.3 Uptime Kuma (port 3001, monitoring dashboard) deployed
 - [ ] 9.4 KSM (Kernel Same-page Merging)
 - [ ] 9.5 Smart Card support
 

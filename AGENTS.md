@@ -44,7 +44,8 @@ sdb (120GB mSATA) → OS only
 - smbios-utils (battery charge — unsupported, skipped)
 - Navidrome (port 4533, Docker, music streaming from /mnt/media/music)
 - Syncthing (port 8384, Docker, host networking, syncs music from PC)
-- Tailscale Funnel (public URLs via .ts.net — Pi-hole at /admin, Navidrome at root)
+- Tailscale Funnel (public URLs via .ts.net — Navidrome at root via --bg persistent)
+- Uptime Kuma (port 3001, Docker, monitoring dashboard)
 
 ## PLAN FILES
 
@@ -62,7 +63,7 @@ sdb (120GB mSATA) → OS only
 | `phase-09-automation.md` | Ansible, Docker backup, KSM, Smart Card |
 | `plan_research.md` | Deep technical research doc |
 
-## PROGRESS (21/41 tasks completed)
+## PROGRESS (22/41 tasks completed)
 
 - **Phase 1** (3/3): Physical assessment, BIOS A19, USB created
 - **Phase 2** (2/2): Ubuntu 26.04 installed, updates done
@@ -70,8 +71,9 @@ sdb (120GB mSATA) → OS only
 - **Phase 4** (4/5): Fan control, i8kmon, WOL, lid management. Battery skipped (unsupported)
 - **Phase 5** (3/4): LVM setup + split, Samba. Backup (5.3) — not yet done
 - **Phase 6** (2/3): Docker CE, Compose plugin, Dockge. Networking deep-dive skipped for now
-- **Phase 7** (4/4): Pi-hole + Unbound (DNS sinkhole + recursive resolver) done. Tailscale Funnel live (Pi-hole at /admin, Navidrome at root via .ts.net, both --bg persistent). WireGuard pending.
+- **Phase 7** (4/4): Pi-hole + Unbound (DNS sinkhole + recursive resolver) done. Tailscale Funnel live (Navidrome at root via .ts.net, --bg persistent). WireGuard pending.
 - **Phase 8** (2/7): Navidrome (port 4533, music streaming) + Syncthing (port 8384 host, syncs music from PC) done. Jellyfin, Pelican, ARM, Gitea, health checks pending.
+- **Phase 9** (1/5): Uptime Kuma (port 3001, monitoring dashboard) deployed. Ansible, backup scripts, KSM, Smart Card pending.
 
 ## CONVENTIONS
 

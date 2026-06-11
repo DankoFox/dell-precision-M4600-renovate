@@ -159,8 +159,8 @@ Build a reliable, well-configured home server on the M4600 that serves as both a
 - [ ] Task 9.1: Ansible managed config
 - [ ] Task 9.2: Automated Docker backups
 - [ ] Task 9.3: Smart Card (SC) Identity
-- [ ] Task 9.4: Uptime Kuma monitoring
-<!-- 0/4 -->
+- [x] Task 9.4: Uptime Kuma monitoring (port 3001)
+<!-- 1/4 -->
 
 </details>
 
