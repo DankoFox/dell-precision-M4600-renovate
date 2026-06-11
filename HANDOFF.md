@@ -85,42 +85,30 @@ All in `~/docker/<service>/` with `compose.yaml`:
 
 ## PENDING TASKS
 
-### Phase 5
-- [ ] 5.3 Backup strategy (rsync + cron) — deferred
-
-### Next Session Priorities (recommended order)
-1. **Backup (5.3)** — music data unprotected, quick rsync cron
-2. **Configure Uptime Kuma** — add monitors for all services
-3. **Pi-hole router DNS (7.1)** — stop Pixel bypassing DNS, set router DHCP
-4. **Gitea (8.4)** — self-hosted git, ~80MB RAM, useful for dotfiles
-5. **WireGuard (7.2)** — backup VPN independent of Tailscale
-
-### Phase 5
-- [ ] 5.3 Backup strategy (rsync + cron) — music data now on server, no protection
-
-### Phase 7
-- [ ] 7.1 Pi-hole: set router DHCP DNS to 192.168.1.200 + fix Pixel IPv6/DoT bypass
-- [ ] 7.2 WireGuard VPN — native VPN for remote access
-- [ ] 7.3 Cloudflare Tunnel — zero-open-ports remote access (requires domain)
-- [x] 7.4 Tailscale Funnel (Navidrome at root via .ts.net, --bg persistent)
-
-### Phase 8
-- [ ] 8.1 Jellyfin — on hold (Sandy Bridge too weak for HEVC)
-- [ ] 8.2 Pelican (Minecraft) — containerized game server
-- [ ] 8.3 ARM — Automatic Ripping Machine (CD ripping)
-- [ ] 8.4 Gitea — self-hosted git server
-- [x] 8.5 Navidrome — music streaming (Subsonic API, port 4533)
-- [x] 8.6 Syncthing — file sync (port 8384 host, syncs music, Receive Only)
-- [ ] 8.6b CouchDB — pending
-- [ ] 8.7 Health checks + optional services
-
-### Phase 9
-- [ ] 9.1 Ansible — configuration management
-- [ ] 9.2 Docker backup scripts
-- [x] 9.3 Uptime Kuma (port 3001, monitoring dashboard) deployed
+### 🔴 CRITICAL — Do First
+- [ ] 5.3 Backup strategy (restic + cron) — data unprotected, #1 priority
 - [ ] 9.3b Configure Uptime Kuma monitors (Pi-hole, Navidrome, Syncthing, SSH, DNS)
-- [ ] 9.4 KSM (Kernel Same-page Merging)
-- [ ] 9.5 Smart Card support
+
+### 🟡 HIGH PRIORITY — Next Sessions
+- [ ] 7.2 Pi-hole router DNS config — fix Pixel bypass, set router DHCP to 192.168.1.200
+- [ ] 8.4 Gitea — self-hosted git server (~80MB RAM)
+- [ ] Security hardening — fail2ban for SSH brute-force protection (~10MB RAM)
+
+### 🟢 MEDIUM PRIORITY — When Ready
+- [ ] Homer Dashboard — single-page dashboard for all services (~5MB RAM)
+- [ ] 8.3 ARM — Automated CD ripping (if you have CDs)
+- [ ] 8.2 Pelican — Minecraft server (if you play)
+
+### ⚪ DEFERRED — Hardware Upgrade Required
+- [ ] RAM upgrade to 16-32GB — DDR3 cheap ($20-40), enables Ollama, Immich
+- [ ] Ethernet cable — $5 for reliable gigabit
+- [ ] 2.5GbE ExpressCard — ~$25 for network speed boost
+
+### ⚪ DROP/DEFER — Redundant or Low Value
+- [ ] 7.3 WireGuard VPN — Tailscale already provides mesh VPN
+- [ ] 7.4 Cloudflare Tunnel — Tailscale Funnel fills the need
+- [ ] 9.5 Smart Card — niche, low practical value
+- [ ] 9.4 KSM — marginal on 8GB, wait for RAM upgrade
 
 ---
 
