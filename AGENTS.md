@@ -1,11 +1,17 @@
 # M4600 Home Server — Project Knowledge Base
 
-**Generated:** 2026-06-11 (updated) — Navidrome + Syncthing + Tailscale Funnel
+**Generated:** 2026-06-11 (updated) — Plan analysis complete, next steps prioritized
 **Project:** Dell Precision M4600 → Enterprise-Grade Linux Home Lab Server
 
 ## OVERVIEW
 
 Repurposing a Dell Precision M4600 (i7-2860QM, 8GB RAM, Quadro 1000M) as a 24/7 headless Linux home server running EndeavourOS (Arch-based). Phased build covering hardware management, containerization, network services, media/self-hosted apps, and automation.
+
+## CRITICAL GAPS
+
+- **Backup**: Data unprotected (music, configs). Use `restic` + cron. Priority #1.
+- **Monitoring**: Uptime Kuma deployed but monitors not configured.
+- **Security**: No fail2ban. SSH key-only is good, but defense-in-depth missing.
 
 ## HARDWARE
 
@@ -75,6 +81,14 @@ sdb (120GB mSATA) → OS only
 - **Phase 8** (2/7): Navidrome (port 4533, music streaming) + Syncthing (port 8384 host, syncs music from PC) done. Jellyfin, Pelican, ARM, Gitea, health checks pending.
 - **Phase 9** (1/5): Uptime Kuma (port 3001, monitoring dashboard) deployed. Ansible, backup scripts, KSM, Smart Card pending.
 
+## NEXT SESSION PRIORITIES (from plan analysis)
+
+1. **Backup (5.3)** — Data unprotected, use restic + cron, #1 priority
+2. **Uptime Kuma monitors (9.3b)** — Configure for all services
+3. **Pi-hole router DNS (7.2)** — Fix Pixel bypass, set router DHCP
+4. **Gitea (8.4)** — Self-hosted git, ~80MB RAM
+5. **Security hardening** — Fail2ban for SSH brute-force protection
+
 ## CONVENTIONS
 
 - All commands use `sudo` where needed. User is `danko`.
@@ -116,3 +130,23 @@ docker compose -f ~/docker/sync/compose.yaml up -d  # Start Syncthing
 - Ethernet (eno1) shows NO-CARRIER — server runs on Wi-Fi only
 - RAM is the primary bottleneck (8GB) — services must be mindful
 - Optical bay caddy is a future upgrade path for more storage
+
+## HARDWARE UPGRADES (Recommended)
+
+| Upgrade | Why | Cost | Priority |
+|---------|-----|------|----------|
+| RAM → 16-32GB | 8GB is bottleneck. DDR3 cheap ($20-40). Enables Ollama, more containers. | $20-40 | HIGH |
+| Ethernet cable | eno1 exists but NO-CARRIER. $5 for reliable gigabit. | $5 | HIGH |
+| 2.5GbE ExpressCard | ExpressCard/54 slot. ~$25 for 2.5GbE adapter. | $25 | MEDIUM |
+| USB UPS | 24/7 server needs power protection. Used UPS with USB monitoring. | $30-50 | MEDIUM |
+
+## SOFTWARE ADDITIONS (Recommended)
+
+| Service | RAM | Why |
+|---------|-----|-----|
+| Gitea | ~80MB | Self-hosted git server |
+| Fail2ban | ~10MB | SSH brute-force protection |
+| Homer Dashboard | ~5MB | Single-page dashboard for all services |
+| Nginx Proxy Manager | ~50MB | Reverse proxy with auto-SSL |
+
+**Skip for now**: Ollama (needs 16GB+), Immich (needs 8GB+ free), Nextcloud (Syncthing covers sync)
