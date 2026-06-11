@@ -1,11 +1,11 @@
 # M4600 Home Server — Project Knowledge Base
 
-**Generated:** 2026-06-11
+**Generated:** 2026-06-11 (updated) — Navidrome + Syncthing + Tailscale Funnel
 **Project:** Dell Precision M4600 → Enterprise-Grade Linux Home Lab Server
 
 ## OVERVIEW
 
-Repurposing a Dell Precision M4600 (i7-2860QM, 8GB RAM, Quadro 1000M) as a 24/7 headless Linux home server running Ubuntu Server LTS 26.04. Phased build covering hardware management, containerization, network services, media/self-hosted apps, and automation.
+Repurposing a Dell Precision M4600 (i7-2860QM, 8GB RAM, Quadro 1000M) as a 24/7 headless Linux home server running EndeavourOS (Arch-based). Phased build covering hardware management, containerization, network services, media/self-hosted apps, and automation.
 
 ## HARDWARE
 
@@ -32,7 +32,7 @@ sdb (120GB mSATA) → OS only
 
 ## SOFTWARE INSTALLED
 
-- OS: Ubuntu Server LTS 26.04 (headless, no GUI)
+- OS: EndeavourOS (Arch-based, headless, no GUI)
 - Docker CE + docker-compose-plugin + containerd.io
 - Lazydocker (TUI)
 - Dockge (web UI at :5001, compose stacks in ~/docker/)
@@ -42,6 +42,9 @@ sdb (120GB mSATA) → OS only
 - Pi-hole + Unbound (DNS sinkhole + recursive resolver at :8080/admin, HaGeZi Pro blocklist loaded, 1.6M domains blocked)
 - dell-bios-fan-control + i8kmon (fan management)
 - smbios-utils (battery charge — unsupported, skipped)
+- Navidrome (port 4533, Docker, music streaming from /mnt/media/music)
+- Syncthing (port 8384, Docker, host networking, syncs music from PC)
+- Tailscale Funnel (public URLs via .ts.net — Pi-hole at /admin, Navidrome at root)
 
 ## PLAN FILES
 
@@ -59,7 +62,7 @@ sdb (120GB mSATA) → OS only
 | `phase-09-automation.md` | Ansible, Docker backup, KSM, Smart Card |
 | `plan_research.md` | Deep technical research doc |
 
-## PROGRESS (19/41 tasks completed)
+## PROGRESS (21/41 tasks completed)
 
 - **Phase 1** (3/3): Physical assessment, BIOS A19, USB created
 - **Phase 2** (2/2): Ubuntu 26.04 installed, updates done
@@ -67,7 +70,8 @@ sdb (120GB mSATA) → OS only
 - **Phase 4** (4/5): Fan control, i8kmon, WOL, lid management. Battery skipped (unsupported)
 - **Phase 5** (3/4): LVM setup + split, Samba. Backup (5.3) — not yet done
 - **Phase 6** (2/3): Docker CE, Compose plugin, Dockge. Networking deep-dive skipped for now
-- **Phase 7** (3/4): Pi-hole + Unbound (DNS sinkhole + recursive resolver) done. Tailscale pre-installed. WireGuard pending.
+- **Phase 7** (4/4): Pi-hole + Unbound (DNS sinkhole + recursive resolver) done. Tailscale Funnel live (Pi-hole at /admin, Navidrome at root via .ts.net, both --bg persistent). WireGuard pending.
+- **Phase 8** (2/7): Navidrome (port 4533, music streaming) + Syncthing (port 8384 host, syncs music from PC) done. Jellyfin, Pelican, ARM, Gitea, health checks pending.
 
 ## CONVENTIONS
 
@@ -93,6 +97,10 @@ docker exec pihole pihole deny <domain>   # Blacklist a domain
 docker exec pihole pihole status          # Check Pi-hole status
 docker exec pihole pihole api "stats/summary"  # Query stats
 docker exec pihole pihole tail           # Live query log
+docker logs navidrome -f      # Tail Navidrome logs
+docker compose -f ~/docker/navidrome/compose.yaml up -d  # Start Navidrome
+sudo tailscale funnel status  # Check Tailscale Funnel status
+sudo tailscale funnel --bg <port>  # Expose a port via Funnel (background)
 ```
 
 ## NOTES

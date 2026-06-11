@@ -92,7 +92,7 @@ Build a reliable, well-configured home server on the M4600 that serves as both a
 ### Progress Tracker
 
 <details>
-<summary><b>📊 Overall Progress: 15 / 41 tasks done</b></summary>
+<summary><b>📊 Overall Progress: 18 / 41 tasks done</b></summary>
 
 #### Phase 1 — Prep & Assessment
 - [x] Task 1.1: Physical assessment + repaste
@@ -141,19 +141,19 @@ Build a reliable, well-configured home server on the M4600 that serves as both a
 - [ ] Task 7.1: Pi-hole (DNS sinkhole)
 - [ ] Task 7.2: WireGuard VPN
 - [ ] Task 7.3: Cloudflare Tunnel (remote access)
-- [ ] Task 7.4: Tailscale (mesh VPN)
-<!-- 0/4 -->
+- [x] Task 7.4: Tailscale Funnel (public URLs via .ts.net)
+<!-- 1/4 -->
 
 #### Phase 8 — Media & Self-Hosted
 - [ ] Task 8.1: Jellyfin (VA-API H.264)
 - [ ] Task 8.2: Pelican Panel (Minecraft Server)
 - [ ] Task 8.3: Automated CD Ripper (ARM)
 - [ ] Task 8.4: Gitea Git server
-- [ ] Task 8.5: Navidrome (FLAC Streamer)
-- [ ] Task 8.6: Syncthing & Obsidian LiveSync
+- [x] Task 8.5: Navidrome (FLAC Streamer, port 4533)
+- [x] Task 8.6: Syncthing (syncs music from PC, port 8384 host)
 - [ ] Task 8.7: Optional services (Immich, Ollama, etc.)
 - [ ] Task 8.8: Health check script
-<!-- 0/8 -->
+<!-- 2/8 -->
 
 #### Phase 9 — Automation & Advanced
 - [ ] Task 9.1: Ansible managed config

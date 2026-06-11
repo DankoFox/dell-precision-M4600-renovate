@@ -23,6 +23,9 @@
   - Pi-hole v6 CLI uses subcommands, not `-a` flags
 - UFW: SSH, Tailscale, Samba, Pi-hole (53, 8080) ports open
 - Fan management: dell-bios-fan-control + i8kmon
+- Navidrome at port 4533 (music streaming, reads /mnt/media/music)
+- Syncthing at port 8384 (host networking, syncs music from PC to /mnt/media/music, Receive Only)
+- Tailscale Funnel exposing Pi-hole at https://danko-m4600.tail81e74b.ts.net/admin and Navidrome at https://danko-m4600.tail81e74b.ts.net/
 
 ### Not Working / Issues
 - **Phone (Pixel) DNS bypass** — Private DNS (DoT) + IPv6 causes Pixel to bypass Pi-hole. Known issue, needs router-level DNS config or UFW rule to force all DNS through Pi-hole.
@@ -38,6 +41,8 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | Directory | Service |
 |-----------|---------|
 | `~/docker/pihole/` | Pi-hole + Unbound |
+| `~/docker/navidrome/` | Navidrome (port 4533) |
+| `~/docker/sync/` | Syncthing (port 8384 host) |
 
 ---
 
@@ -64,15 +69,16 @@ All in `~/docker/<service>/` with `compose.yaml`:
 - [ ] 7.1 Pi-hole: set router DHCP DNS to 192.168.1.200 + fix Pixel IPv6/DoT bypass
 - [ ] 7.2 WireGuard VPN — native VPN for remote access
 - [ ] 7.3 Cloudflare Tunnel — zero-open-ports remote access
-- [ ] 7.4 Tailscale already installed, verify mesh working
+- [x] 7.4 Tailscale Funnel live (Pi-hole at /admin, Navidrome at root via .ts.net)
 
 ### Phase 8
 - [ ] 8.1 Jellyfin — media server (VA-API via i965 Intel iGPU)
 - [ ] 8.2 Pelican (Minecraft) — containerized game server
 - [ ] 8.3 ARM — Automatic Ripping Machine (CD ripping)
 - [ ] 8.4 Gitea — self-hosted git server
-- [ ] 8.5 Navidrome — music streaming (Subsonic API)
-- [ ] 8.6 Syncthing + CouchDB — file sync
+- [x] 8.5 Navidrome — music streaming (Subsonic API, port 4533)
+- [x] 8.6 Syncthing — file sync (port 8384 host, syncs music)
+- [ ] 8.6b CouchDB — pending
 - [ ] 8.7 Health checks + optional services
 
 ### Phase 9
