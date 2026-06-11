@@ -50,9 +50,9 @@ sudo netplan apply
 
 **Verification**:
 - `docker ps` → pihole container running
-- Browser: `http://192.168.1.100:8080/admin` → Pi-hole dashboard
-- `nslookup doubleclick.net 192.168.1.100` → returns 0.0.0.0 (blocked)
-- `nslookup google.com 192.168.1.100` → returns valid IP (allowed)
+- Browser: `http://192.168.1.200:8080/admin` → Pi-hole dashboard
+- `nslookup doubleclick.net 192.168.1.200` → returns 0.0.0.0 (blocked)
+- `nslookup google.com 192.168.1.200` → returns valid IP (allowed)
 
 **Evidence to Capture**:
 - [ ] Pi-hole dashboard screenshot
@@ -104,7 +104,7 @@ sudo ufw allow 51820/udp
 - `sudo wg show` → interface up, peer listed
 - `sudo systemctl status wg-quick@wg0` → active
 - From phone/laptop: connect via WireGuard app, ping 10.0.0.1
-- From phone: access http://192.168.1.100:9000 (Portainer through VPN)
+- From phone: access http://192.168.1.200:9000 (Portainer through VPN)
 
 **Evidence to Capture**:
 - [ ] wg show output
@@ -145,7 +145,7 @@ docker compose up -d
 **Verification**:
 - Go to Cloudflare Zero Trust Dashboard → Tunnels.
 - Verify the tunnel is "Healthy".
-- Route a public domain (e.g., `jellyfin.yourdomain.com`) to `http://192.168.1.100:8096`.
+- Route a public domain (e.g., `jellyfin.yourdomain.com`) to `http://192.168.1.200:8096`.
 - Access your domain from a cell network.
 
 **Evidence to Capture**:

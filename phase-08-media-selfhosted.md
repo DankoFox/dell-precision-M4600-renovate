@@ -50,7 +50,7 @@ docker compose up -d
 
 **Verification**:
 - `docker ps` → jellyfin running
-- Browser: `http://192.168.1.100:8096` → Jellyfin setup wizard
+- Browser: `http://192.168.1.200:8096` → Jellyfin setup wizard
 - Add media folder, scan, play a file
 - Dashboard shows playback info (direct vs transcoded)
 
@@ -74,7 +74,7 @@ mkdir -p ~/docker/pelican && cd ~/docker/pelican
 **Learning**: Game server orchestration, panel/daemon (wings) architecture, mod management.
 
 **Verification**:
-- Access `http://192.168.1.100:8080` (or configured port).
+- Access `http://192.168.1.200:8080` (or configured port).
 - Create a Minecraft instance (use **Purpur** for 2860QM optimization).
 - Connect from Minecraft client to server IP.
 
@@ -142,8 +142,8 @@ services:
     environment:
       - USER_UID=1000
       - USER_GID=1000
-      - GITEA__server__DOMAIN=192.168.1.100
-      - GITEA__server__SSH_DOMAIN=192.168.1.100
+      - GITEA__server__DOMAIN=192.168.1.200
+      - GITEA__server__SSH_DOMAIN=192.168.1.200
 ```
 ```bash
 docker compose up -d
@@ -153,9 +153,9 @@ docker compose up -d
 
 **Verification**:
 - `docker ps` → gitea running
-- Browser: `http://192.168.1.100:3000` → Gitea UI
+- Browser: `http://192.168.1.200:3000` → Gitea UI
 - Register first user, create a repo
-- `git clone http://192.168.1.100:3000/user/repo.git` → works
+- `git clone http://192.168.1.200:3000/user/repo.git` → works
 - `git push` → succeeds
 
 **Evidence to Capture**:
@@ -195,7 +195,7 @@ docker compose up -d
 **Learning**: Subsonic API ecosystem, read-only (`:ro`) volume mapping for media protection.
 
 **Verification**:
-- Access `http://192.168.1.100:4533`.
+- Access `http://192.168.1.200:4533`.
 - Create admin user and verify FLAC files are scanning. You can now use apps like **Symfonium** (Android) or **Plexamp**-alternatives to stream.
 
 ---
@@ -245,8 +245,8 @@ docker compose up -d
 **Learning**: Peer-to-peer sync protocols, NoSQL databases (CouchDB), plugin integration.
 
 **Verification**:
-- Access Syncthing at `http://192.168.1.100:8384`.
-- Access CouchDB at `http://192.168.1.100:5984/_utils` (Fauxton UI).
+- Access Syncthing at `http://192.168.1.200:8384`.
+- Access CouchDB at `http://192.168.1.200:5984/_utils` (Fauxton UI).
 - Configure Obsidian LiveSync plugin to point to your CouchDB instance.
 
 ---

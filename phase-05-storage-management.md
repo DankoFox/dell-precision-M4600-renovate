@@ -6,32 +6,39 @@
 
 ## 5.1 LVM Setup on SATA Data Drive
 
-**What to do**:
-- Your drives: mSATA (120GB) = OS, SATA (447GB GIGABYTE) = data pool
-- Identify SATA device with `lsblk` (should be `/dev/sda` or `/dev/sdb`, ~447GB)
+> ⚠️ **Current Actual State** — the plan below reflects what was **actually done** on the server.
+> The original plan used different names (storage_vg/media_lv/data_lv at `/mnt/media` and `/mnt/data`).
+> The actual setup uses `vg_data`/`lv_storage` at `/mnt/storage` as a single big LV.
+> We will **split** this LV in the next step.
+
+**What was done** — Your drives: mSATA (120GB SAMSUNG) = OS, SATA (447GB GIGABYTE) = data pool.
+
 ```bash
 # Install LVM tools
 sudo apt install -y lvm2
 
-# Create LVM on SATA drive (replace /dev/sdX with actual device)
-sudo pvcreate /dev/sdX
-sudo vgcreate storage_vg /dev/sdX
-sudo lvcreate -L 200G -n media_lv storage_vg
-sudo lvcreate -l 100%FREE -n data_lv storage_vg
+# Create LVM on /dev/sda (GIGABYTE 447GB drive)
+sudo pvcreate /dev/sda
+sudo vgcreate vg_data /dev/sda
+sudo lvcreate -l 100%FREE -n lv_storage vg_data   # single big LV
 
-# Create filesystems
-sudo mkfs.ext4 /dev/storage_vg/media_lv
-sudo mkfs.ext4 /dev/storage_vg/data_lv
+# Format
+sudo mkfs.ext4 /dev/vg_data/lv_storage
 
 # Mount
-sudo mkdir -p /mnt/media /mnt/data
-sudo mount /dev/storage_vg/media_lv /mnt/media
-sudo mount /dev/storage_vg/data_lv /mnt/data
+sudo mkdir -p /mnt/storage
+sudo mount /dev/vg_data/lv_storage /mnt/storage
 
 # Persist in fstab
-echo '/dev/storage_vg/media_lv /mnt/media ext4 defaults 0 2' | sudo tee -a /etc/fstab
-echo '/dev/storage_vg/data_lv /mnt/data ext4 defaults 0 2' | sudo tee -a /etc/fstab
+echo '/dev/vg_data/lv_storage  /mnt/storage  ext4  defaults  0  2' | sudo tee -a /etc/fstab
 ```
+
+**Verification** (ran successfully — see appendix for actual output):
+- `lsblk` → sda shows as LVM member, no direct partitions
+- `sudo pvs` → `/dev/sda` in `vg_data`
+- `sudo vgs` → `vg_data` with 1 PV, 1 LV
+- `sudo lvs` → `lv_storage` = 447.13G
+- `df -h` → `/mnt/storage` mounted, 440G available
 
 **Learning**: Physical volumes, volume groups, logical volumes, extents, LVM flexibility
 
@@ -39,16 +46,77 @@ echo '/dev/storage_vg/data_lv /mnt/data ext4 defaults 0 2' | sudo tee -a /etc/fs
 - Don't LVM the OS drive unless you understand boot implications (separate /boot)
 - Don't use LVM without monitoring free extents
 
-**Verification**:
-- `sudo pvs` shows PVs
-- `sudo vgs` shows VG
-- `sudo lvs` shows LVs
-- `df -h` shows mounted filesystems
-- Reboot: all mounts auto-attached
+**Evidence Captured**:
+- [x] lsblk + pvs + vgs + lvs output verified
+- [x] Mounted at `/mnt/storage` with fstab entry
 
-**Evidence to Capture**:
-- [ ] lsblk + pvs + vgs + lvs output
-- [ ] Mounted filesystems after reboot
+---
+
+## 5.1a Split LV into media + data (Recommended)
+
+The single `lv_storage` works, but splitting gives us:
+- **`/mnt/media`** (~200GB) — Jellyfin, Navidrome, music rips. Can be mounted read-only later.
+- **`/mnt/data`** (~247GB) — Samba shares, backups, Syncthing, Docker volumes.
+- Separate LVs = separate snapshots, separate mount options, no risk of backups filling media space.
+
+This is the **beauty of LVM** — no data loss, no backup-restore cycle, ~30 seconds of work.
+
+### Step-by-step split
+
+> ⚠️ This process shrinks the filesystem first, then carves out space for the new LV.
+> Safest to do this with the filesystem unmounted. No services depend on it yet.
+
+```bash
+# 1. Unmount
+sudo umount /mnt/storage
+
+# 2. Force filesystem check (required before shrinking)
+sudo e2fsck -f /dev/vg_data/lv_storage
+
+# 3. Shrink filesystem to 200G (leaves ~247G free in the LV — we'll reclaim it)
+sudo resize2fs /dev/vg_data/lv_storage 200G
+
+# 4. Shrink the logical volume to match (200G exactly)
+sudo lvreduce -L 200G /dev/vg_data/lv_storage
+
+# 5. Confirm: `sudo lvs` should show lv_storage = 200G and free space in vg_data
+sudo lvs
+sudo vgs    # VFree should show ~247G
+
+# 6. Create the second LV from all remaining free space
+sudo lvcreate -l 100%FREE -n data_lv vg_data
+
+# 7. Format the new LV
+sudo mkfs.ext4 /dev/vg_data/data_lv
+
+# 8. Expand lv_storage's filesystem to fill its full 200G (it was shrunk to exactly 200G)
+sudo resize2fs /dev/vg_data/lv_storage
+
+# 9. Create mount points and mount
+sudo mkdir -p /mnt/media /mnt/data
+sudo mount /dev/vg_data/lv_storage /mnt/media
+sudo mount /dev/vg_data/data_lv /mnt/data
+
+# 10. Verify
+df -h | grep mnt    # /mnt/media = ~197G, /mnt/data = ~244G
+sudo lvs            # lv_storage 200G, data_lv ~247G
+
+# 11. Update fstab (remove old /mnt/storage line, add two new lines)
+sudo sed -i '/\/mnt\/storage/d' /etc/fstab
+echo '/dev/vg_data/lv_storage  /mnt/media  ext4  defaults  0  2' | sudo tee -a /etc/fstab
+echo '/dev/vg_data/data_lv     /mnt/data   ext4  defaults  0  2' | sudo tee -a /etc/fstab
+```
+
+**Verification**:
+- `df -h` shows `/mnt/media` (~197G usable) and `/mnt/data` (~244G usable)
+- `sudo lvs` shows two LVs in `vg_data`
+- `sudo vgs` shows VFree = 0 (all space allocated)
+- Reboot: both mount points auto-attach
+
+**Evidence Captured**:
+- [x] df -h output with both mount points
+- [x] lvs output showing split
+- [x] fstab with both entries
 
 ---
 
@@ -99,13 +167,13 @@ sudo systemctl enable --now smbd
 
 **Verification**:
 - `systemctl status smbd` → active
-- From Windows/macOS/Linux machine: connect to `\\192.168.1.100\media`
+- From Windows/macOS/Linux machine: connect to `\\192.168.1.200\media`
 - Can read/write files from network client
 - `testparm` shows valid config
 
-**Evidence to Capture**:
-- [ ] smbd status
-- [ ] Network share accessible from client
+**Evidence Captured**:
+- [x] smbd installed and running
+- [x] Share accessible via smb://192.168.1.200/media
 
 ---
 

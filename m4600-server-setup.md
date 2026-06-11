@@ -42,6 +42,8 @@ Turn Dell Precision M4600 (i7-2860QM, 8GB RAM, Quadro 1000M) into a home server.
 | Media | Jellyfin + ARM | Automated ripping for CD collection |
 | Security | Smart Card (SC) | Use built-in slot for hardware-backed keys |
 | Storage | 120GB mSATA + 447GB SATA | Split OS and Data Pool (LVM) |
+| Network | Wi-Fi (wlp3s0), static IP 192.168.1.200/24 | Ethernet (eno1) has no cable; Wi-Fi for now |
+| LVM | vg_data: lv_storage (200G) + data_lv (247G) | Split per plan, mounted at /mnt/media + /mnt/data |
 
 ### Hardware Constraints
 - **RAM**: 8GB. **Note**: The i7-2860QM quad-core enables all 4 DIMM slots (Max 32GB).
@@ -87,67 +89,80 @@ Build a reliable, well-configured home server on the M4600 that serves as both a
 
 ## Execution Strategy
 
-### Phased Build (Sequential, Learning-Oriented)
+### Progress Tracker
 
-```
-Phase 1 (Prep & Assess):
-├── Task 1.1: Physical assessment + repaste
-├── Task 1.2: BIOS configuration (A19)
-└── Task 1.3: Create Ubuntu Server 26.04 USB
+<details>
+<summary><b>📊 Overall Progress: 15 / 41 tasks done</b></summary>
 
-Phase 2 (OS Install):
-├── Task 2.1: Install Ubuntu Server (TPM optional)
-└── Task 2.2: Post-install updates (fastfetch, zram)
+#### Phase 1 — Prep & Assessment
+- [x] Task 1.1: Physical assessment + repaste
+- [x] Task 1.2: BIOS configuration (A19)
+- [x] Task 1.3: Create Ubuntu Server 26.04 USB
+<!-- 3/3 -->
 
-Phase 3 (Linux Fundamentals):
-├── Task 3.1: Network config (netplan)
-├── Task 3.2: SSH hardening (key-only)
-├── Task 3.3: UFW firewall
-├── Task 3.4: Users & sudo-rs
-├── Task 3.5: systemd (cgroup v2)
-├── Task 3.6: Package management (apt/dpkg)
-└── Task 3.7: Monitoring (fastfetch, htop)
+#### Phase 2 — OS Install
+- [x] Task 2.1: Install Ubuntu Server 26.04
+- [x] Task 2.2: Post-install updates (zram, fastfetch)
+<!-- 2/2 -->
 
-Phase 4 (Hardware Management):
-├── Task 4.1: Dell SMM fan control
-├── Task 4.2: i8kmon daemon
-├── Task 4.3: Battery charge thresholds
-├── Task 4.4: Wake-on-LAN
-└── Task 4.5: Lid Management (headless)
+#### Phase 3 — Linux Fundamentals
+- [x] Task 3.1: Network config (Wi-Fi, static IP 192.168.1.200)
+- [x] Task 3.2: SSH hardening (Ed25519 key-only)
+- [x] Task 3.3: UFW firewall (SSH + Tailscale allowed)
+- [x] Task 3.4: Users & sudo-rs
+- [x] Task 3.5: systemd (cgroup v2)
+- [x] Task 3.6: Package management (apt/dpkg)
+- [x] Task 3.7: Monitoring (fastfetch, htop)
+<!-- 7/7 -->
 
-Phase 5 (Storage Management):
-├── Task 5.1: LVM setup
-├── Task 5.2: Samba file shares
-└── Task 5.3: Backup strategy (rsync/restic)
+#### Phase 4 — Hardware Management
+- [x] Task 4.1: Dell SMM fan control
+- [x] Task 4.2: i8kmon daemon
+- [x] Task 4.3: Battery charge thresholds — *skipped (hardware unsupported)*
+- [x] Task 4.4: Wake-on-LAN
+- [x] Task 4.5: Lid Management (headless)
+<!-- 4.5/5 -->
 
-Phase 6 (Containerization):
-├── Task 6.1: Docker CE installation
-├── Task 6.2: Docker Compose (compose.yaml)
-├── Task 6.3: Portainer UI
-└── Task 6.4: Container networking deep-dive
+#### Phase 5 — Storage Management
+- [x] Task 5.1a: LVM setup (vg_data, /mnt/storage)
+- [x] Task 5.1b: LVM split (lv_storage 200G + data_lv 247G)
+- [x] Task 5.2: Samba file shares
+- [🔄] Task 5.3: Backup strategy (rsync + cron) — *coming back to this*
+<!-- 3/4 -->
 
-Phase 7 (Network Services):
-├── Task 7.1: Pi-hole (DNS sinkhole)
-├── Task 7.2: WireGuard VPN
-├── Task 7.3: Nginx reverse proxy
-└── Task 7.4: TLS/SSL (Let's Encrypt)
+#### Phase 6 — Containerization
+- [x] Task 6.1: Docker CE installation
+- [x] Task 6.2: Docker Compose (compose.yaml)
+- [x] Task 6.3: Dockge UI (instead of Portainer)
+- [ ] Task 6.4: Container networking deep-dive
+<!-- 2/4 -->
 
-Phase 8 (Media & Self-Hosted):
-├── Task 8.1: Jellyfin (VA-API acceleration)
-├── Task 8.2: Pelican Panel (Minecraft Server)
-├── Task 8.3: Automated CD Ripper (ARM)
-├── Task 8.4: Gitea Git server
-├── Task 8.5: Navidrome (FLAC Streamer)
-├── Task 8.6: Syncthing & Obsidian LiveSync
-├── Task 8.7: Optional services (Immich, Ollama)
-└── Task 8.8: Health checks
+#### Phase 7 — Network Services
+- [ ] Task 7.1: Pi-hole (DNS sinkhole)
+- [ ] Task 7.2: WireGuard VPN
+- [ ] Task 7.3: Cloudflare Tunnel (remote access)
+- [ ] Task 7.4: Tailscale (mesh VPN)
+<!-- 0/4 -->
 
-Phase 9 (Automation & Advanced):
-├── Task 9.1: Ansible managed config
-├── Task 9.2: Automated backups
-├── Task 9.3: SC Slot Identity (mTLS/SSH)
-└── Task 9.4: Monitoring (Uptime Kuma)
-```
+#### Phase 8 — Media & Self-Hosted
+- [ ] Task 8.1: Jellyfin (VA-API H.264)
+- [ ] Task 8.2: Pelican Panel (Minecraft Server)
+- [ ] Task 8.3: Automated CD Ripper (ARM)
+- [ ] Task 8.4: Gitea Git server
+- [ ] Task 8.5: Navidrome (FLAC Streamer)
+- [ ] Task 8.6: Syncthing & Obsidian LiveSync
+- [ ] Task 8.7: Optional services (Immich, Ollama, etc.)
+- [ ] Task 8.8: Health check script
+<!-- 0/8 -->
+
+#### Phase 9 — Automation & Advanced
+- [ ] Task 9.1: Ansible managed config
+- [ ] Task 9.2: Automated Docker backups
+- [ ] Task 9.3: Smart Card (SC) Identity
+- [ ] Task 9.4: Uptime Kuma monitoring
+<!-- 0/4 -->
+
+</details>
 
 ### Memory Management Strategy (8GB Constraint)
 - Services NOT started simultaneously. Added incrementally, memory monitored.
@@ -193,7 +208,7 @@ Phase 9 (Automation & Advanced):
 ### Verification Commands
 ```bash
 # Core system
-ssh user@192.168.1.100      # SSH works
+ssh user@192.168.1.200      # SSH works
 sudo ufw status              # Firewall active
 systemctl is-active sshd     # SSH active
 systemctl is-active docker   # Docker active

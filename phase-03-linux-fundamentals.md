@@ -27,7 +27,7 @@ network:
   ethernets:
     eno1:  # <-- replace with your interface name
       addresses:
-        - 192.168.1.100/24  # <-- choose static IP within your LAN
+        - 192.168.1.200/24  # <-- choose static IP within your LAN
       routes:
         - to: default
           via: 192.168.1.1  # <-- your router's IP
@@ -69,7 +69,7 @@ sudo netplan apply
 ssh-keygen -t ed25519 -C "m4600-server"
 
 # Copy public key to server
-ssh-copy-id user@192.168.1.100
+ssh-copy-id user@192.168.1.200
 
 # On server, harden SSH config
 sudo nano /etc/ssh/sshd_config.d/99-hardening.conf
@@ -100,8 +100,8 @@ sudo systemctl restart sshd
 - Keep root login disabled at all times
 
 **Verification**:
-- Open NEW terminal, SSH from local machine: `ssh user@192.168.1.100 -i ~/.ssh/id_ed25519`
-- Password login should fail (test with `ssh -o PreferredAuthentications=password user@192.168.1.100`)
+- Open NEW terminal, SSH from local machine: `ssh user@192.168.1.200 -i ~/.ssh/id_ed25519`
+- Password login should fail (test with `ssh -o PreferredAuthentications=password user@192.168.1.200`)
 - Root login should fail
 
 **Evidence to Capture**:
@@ -142,7 +142,7 @@ sudo ufw status verbose
 **Verification**:
 - `sudo ufw status` shows active rules, SSH allowed
 - SSH from another machine still works
-- `nmap -p- 192.168.1.100` from another machine shows ONLY port 22 open
+- `nmap -p- 192.168.1.200` from another machine shows ONLY port 22 open
 
 **Evidence to Capture**:
 - [ ] ufw status output

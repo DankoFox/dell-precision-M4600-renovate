@@ -23,7 +23,7 @@ nano inventory.ini
 **inventory.ini**:
 ```ini
 [servers]
-m4600 ansible_host=192.168.1.100 ansible_user=danko ansible_ssh_private_key_file=~/.ssh/id_ed25519
+m4600 ansible_host=192.168.1.200 ansible_user=danko ansible_ssh_private_key_file=~/.ssh/id_ed25519
 
 [servers:vars]
 ansible_python_interpreter=/usr/bin/python3
@@ -200,8 +200,8 @@ opensc-tool -l
 **Learning**: Monitoring concepts (push vs pull), alerting channels (email, webhook, Telegram)
 
 **Verification**:
-- Browser: `http://192.168.1.100:3001` → Uptime Kuma dashboard
-- Add monitor for `http://192.168.1.100:8096` → status: UP
+- Browser: `http://192.168.1.200:3001` → Uptime Kuma dashboard
+- Add monitor for `http://192.168.1.200:8096` → status: UP
 - Set up notification (email/Telegram/webhook)
 
 **Evidence to Capture**:

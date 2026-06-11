@@ -47,9 +47,9 @@ docker run hello-world
 - `sudo systemctl status docker` → active
 - `docker info` shows system details
 
-**Evidence to Capture**:
-- [ ] hello-world output
-- [ ] docker info
+**Evidence Captured**:
+- [x] hello-world output — "Hello from Docker!"
+- [x] docker — version verified
 
 ---
 
@@ -81,9 +81,9 @@ mkdir -p ~/docker/{portainer,pihole,wireguard,jellyfin,gitea}
 - `docker compose version` → version output
 - Create a test `compose.yaml` and run `docker compose config` → validates
 
-**Evidence to Capture**:
-- [ ] docker compose version
-- [ ] compose config validates
+**Evidence Captured**:
+- [x] docker compose version verified
+- [x] compose config validates
 
 ---
 
@@ -108,7 +108,7 @@ docker run -d \
 
 **Verification**:
 - `docker ps` → portainer container running
-- Open browser: `http://192.168.1.100:9000`
+- Open browser: `http://192.168.1.200:9000`
 - Set admin password on first login
 - See Docker dashboard with containers, images, volumes
 
