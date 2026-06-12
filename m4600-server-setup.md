@@ -4,7 +4,7 @@
 
 > **Goal**: Transform Dell Precision M4600 (i7-2860QM, 8GB RAM) into a 24/7 home server for learning Linux and hosting lightweight services.
 >
-> **Status**: 22/41 tasks done → see [AGENTS.md](AGENTS.md#5-progress-dashboard) for full tracker.
+> **Status**: 27/48 tasks done → see [AGENTS.md](AGENTS.md#5-progress-dashboard) for full tracker.
 >
 > **OS**: Ubuntu Server 26.04 LTS
 > **User**: `danko` (on server)
