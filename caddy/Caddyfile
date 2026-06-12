@@ -1,0 +1,26 @@
+:8081 {
+    # Kuma: internal only
+    handle_path /kuma/* {
+        @blocked {
+            not remote_ip 192.168.1.0/24 100.0.0.0/8 127.0.0.0/8
+        }
+        handle @blocked {
+            respond "Internal only" 403
+        }
+        reverse_proxy 127.0.0.1:3001
+    }
+
+    # Dockge: internal only
+    handle_path /dockge/* {
+        @blocked {
+            not remote_ip 192.168.1.0/24 100.0.0.0/8 127.0.0.0/8
+        }
+        handle @blocked {
+            respond "Internal only" 403
+        }
+        reverse_proxy 127.0.0.1:5001
+    }
+
+    # Catch-all: Navidrome at root (same as old direct funnel setup)
+    reverse_proxy 127.0.0.1:4533
+}
