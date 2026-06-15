@@ -52,16 +52,19 @@
 
 ---
 
-## 1c. This Session — Gitea Deployment Plan
+## 1c. This Session — Gitea Deployed
 
 **Date:** 2026-06-14
-**Summary:** SV-01: Researched Gitea Docker best practices, wrote deploy script `sv-01-gitea-setup.sh` with SQLite backend, resource limits (256M/128M reservation/0.5 CPU), health check, and Cloudflare tunnel config update (git.dankofox.quest → localhost:3000). Multi-hostname tunnel config extends existing navidrome-tunnel.
+**Summary:** SV-01: Gitea deployed and running at :3000, accessible at https://git.dankofox.quest via Cloudflare tunnel. SQLite backend, resource limits (256M/128M reservation/0.5 CPU), health check configured. CF tunnel multi-ingress extended to route git.dankofox.quest → localhost:3000.
 
-**Completed (planning):**
+**Completed:**
 - Researched Gitea Docker: SQLite best for single-user on 8GB (~80MB RAM vs 150MB+ with PostgreSQL)
 - Researched Cloudflare tunnel multi-ingress: single tunnel supports multiple hostnames in config.yml
 - Wrote `sv-01-gitea-setup.sh` — complete deploy script (compose, start, tunnel update, DNS, verification)
-- Updated AGENTS.md: SV-01 mark done, service inventory, progress (78% total), key commands
+- Deployed Gitea container at ~/docker/gitea/ with compose.yaml
+- Updated cloudflared config.yml for multi-hostname ingress (git.dankofox.quest → :3000)
+- DNS A/AAAA records (grey cloud) for git.dankofox.quest → 192.168.1.200
+- Verified: Gitea accessible at https://git.dankofox.quest, ~80MB RAM, container healthy
 
 **Key decisions:**
 - SQLite over PostgreSQL — saves ~100MB RAM, simpler deployment, sufficient for single-user
@@ -105,6 +108,7 @@
 | Date | Summary | Key Decisions | State Change |
 |------|---------|---------------|--------------|
 | 2026-06-20 | RAM upgrade: 8→24GB (2× Inmos 8GB added) | 4+8 per channel, dual-channel active. Ollama/Immich now feasible. HW-01 done. | 24GB — RAM bottleneck resolved |
+| 2026-06-14 | Gitea deployed (SV-01) | Deployed Gitea at :3000, SQLite, health checks, resource limits. CF tunnel multi-ingress: git.dankofox.quest → :3000. Running. | SV-01 done |
 | 2026-06-14 | Gitea deployment plan (SV-01) | Researched Gitea Docker + SQLite. Wrote `sv-01-gitea-setup.sh` with compose, CF tunnel multi-hostname config, resource limits. Deploy-ready. | SV-01 plan done |
 | 2026-06-12 | Docker UFW bypass fixed | ufw-docker installed; container ports now behind UFW | SC-02 done |
 | 2026-06-12 | Container health checks (MT-06) | Navidrome, Syncthing, Unbound got explicit healthchecks. Pi-hole + Uptime Kuma use built-in. All 6 containers healthy. | MT-06 done |
@@ -146,7 +150,7 @@
 - Tailscale Funnel still available for internal access (but currently unused since Caddy removed)
 - Uptime Kuma at port 3001 (direct port, LAN only) — accessible at http://192.168.1.200:3001
 - Dockge at port 5001 (direct port, LAN only)
-- Gitea deploy-ready at `~/docker/gitea/` (compose.yaml written, CF tunnel ingress planned for git.dankofox.quest)
+- Gitea deployed at `~/docker/gitea/` (running on :3000, accessible at https://git.dankofox.quest via CF tunnel)
 - Domain dankofox.quest managed at Cloudflare DNS (orange cloud for CF tunnel, grey cloud for direct DNS)
 
 ### ❌ Not Working / Issues
@@ -183,7 +187,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 |----------|----|-------------|-------|------------|
 | 🔴 Critical | **BK-01** | Set up restic + cron backup (data unprotected, #1 priority) | 5.3 | — |
 | 🔴 Critical | ~~**SC-02**~~ | ~~Fix Docker UFW bypass (container ports exposed past firewall)~~ | — | — | ✅
-| 🟡 High | ~~**SV-01**~~ | ~~Deploy Gitea (~80MB RAM) — deploy plan ready, run `sv-01-gitea-setup.sh`~~ | 8.4 | Docker ready | ✅
+| 🟡 High | ~~**SV-01**~~ | ~~Deploy Gitea (~80MB RAM) — deployed at :3000, git.dankofox.quest~~ | 8.4 | Docker ready | ✅
 | 🟡 High | **MT-04** | Add Docker resource limits to all compose.yaml | — | — |
 | 🟡 High | **BK-03** | Backup verification + restore testing (restic check) | 5.4 | BK-01 |
 | 🟡 High | ~~**SV-04**~~ | ~~Caddy reverse proxy — tested, then removed. Replaced by Cloudflare tunnel + domain~~ | 8.7 | BK-01, BK-02 | ✅

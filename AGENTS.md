@@ -60,7 +60,7 @@ sdb (120GB Samsung mSATA) → OS only
 | Samba (smbd) | 445 | ❌ native | ✅ Working | ~30MB | `/etc/samba/smb.conf` |
 | Tailscale | 100.101.7.123 | ❌ native | ✅ Working | ~40MB | `/etc/default/tailscale` |
 | Dockge | 5001 | ✅ bridge | ✅ Working | ~30MB | `~/docker/dockge/` |
-| Gitea | 3000 | ✅ bridge | 🔜 Deploy plan ready | ~80MB | `~/docker/gitea/` |
+| Gitea | 3000 | ✅ bridge | ✅ Working | ~80MB | `~/docker/gitea/` |
 | Lazydocker | TUI | ❌ native | ✅ Installed | — | — |
 | **Total running** | | | | **~500MB** | |
 
@@ -79,9 +79,9 @@ sdb (120GB Samsung mSATA) → OS only
 | 5. Storage Management | 6 | 3 | 50% | **BK-01**: Backup strategy |
 | 6. Containerization | 3 | 2 | 67% | Networking deep-dive |
 | 7. Network Services | 4 | 4 | 100% | — |
-| 8. Media & Self-Hosted | 8 | 4 | 50% | **8.1**: Jellyfin (HEVC) |
+| 8. Media & Self-Hosted | 8 | 5 | 63% | **8.1**: Jellyfin (HEVC) |
 | 9. Automation | 12 | 9 | 75% | **MT-04**: Docker resource limits |
-| **Total** | **50** | **39** | **78%** | |
+| **Total** | **50** | **40** | **80%** | |
 
 ### Detailed Task List
 
@@ -133,7 +133,7 @@ sdb (120GB Samsung mSATA) → OS only
 - [ ] 8.1 Jellyfin — *on hold (Sandy Bridge too weak for HEVC)*
 - [ ] 8.2 Pelican (Minecraft)
 - [ ] 8.3 ARM (CD ripping)
-- [x] **SV-01**: Gitea (~80MB RAM) — deploy plan ready ← 🟡
+- [x] **SV-01**: Gitea (~80MB RAM) — deployed ✅
 - [x] 8.5 Navidrome
 - [x] 8.6 Syncthing
 - [x] **SV-04**: Caddy reverse proxy — tested, then removed. Replaced by Cloudflare tunnel + domain ← 🟡
