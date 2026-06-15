@@ -54,13 +54,15 @@ sdb (120GB Samsung mSATA) → OS only
 | Pi-hole + Unbound | 53, 8080 | ✅ (host net) | ✅ Working | ~150MB | `~/docker/pihole/` |
 | Navidrome | 4533 | ✅ bridge | ✅ Working | ~80MB | `~/docker/navidrome/` |
 | Syncthing | 8384 | ✅ host net | ✅ Working | ~100MB | `~/docker/sync/` |
-| Caddy | 8081 | ✅ bridge | ✅ Working | ~30MB | `~/docker/caddy/` |
+| Caddy | 8081 | ✅ bridge | ❌ Removed | ~30MB | `~/docker/caddy/` |
+| Cloudflared (tunnel) | — | ❌ native | ✅ Working | ~30MB | `/etc/cloudflared/` |
 | Uptime Kuma | 3001 | ✅ bridge | ✅ Running (no monitors) | ~50MB | `~/docker/uptime-kuma/` |
 | Samba (smbd) | 445 | ❌ native | ✅ Working | ~30MB | `/etc/samba/smb.conf` |
 | Tailscale | 100.101.7.123 | ❌ native | ✅ Working | ~40MB | `/etc/default/tailscale` |
 | Dockge | 5001 | ✅ bridge | ✅ Working | ~30MB | `~/docker/dockge/` |
+| Gitea | 3000 | ✅ bridge | 🔜 Deploy plan ready | ~80MB | `~/docker/gitea/` |
 | Lazydocker | TUI | ❌ native | ✅ Installed | — | — |
-| **Total running** | | | | **~480MB** | |
+| **Total running** | | | | **~500MB** | |
 
 ---
 
@@ -77,9 +79,9 @@ sdb (120GB Samsung mSATA) → OS only
 | 5. Storage Management | 6 | 3 | 50% | **BK-01**: Backup strategy |
 | 6. Containerization | 3 | 2 | 67% | Networking deep-dive |
 | 7. Network Services | 4 | 4 | 100% | — |
-| 8. Media & Self-Hosted | 8 | 3 | 37% | **SV-01**: Gitea |
+| 8. Media & Self-Hosted | 8 | 4 | 50% | **8.1**: Jellyfin (HEVC) |
 | 9. Automation | 12 | 9 | 75% | **MT-04**: Docker resource limits |
-| **Total** | **50** | **38** | **76%** | |
+| **Total** | **50** | **39** | **78%** | |
 
 ### Detailed Task List
 
@@ -125,17 +127,18 @@ sdb (120GB Samsung mSATA) → OS only
 - [x] 7.1 Pi-hole + Unbound
 - [x] **NW-01**: Router DNS config (fix Pixel bypass) ← 🟡
 - [x] **NW-03**: Release DHCP lease (keep static 192.168.1.200 only) ← 🟢
-- [x] 7.4 Tailscale Funnel (Navidrome public)
+- [x] 7.4 Tailscale Funnel (Navidrome public — replaced by Cloudflare tunnel + domain, still available for internal)
 
-#### Phase 8 — Media & Self-Hosted (2/8)
+#### Phase 8 — Media & Self-Hosted (4/9)
 - [ ] 8.1 Jellyfin — *on hold (Sandy Bridge too weak for HEVC)*
 - [ ] 8.2 Pelican (Minecraft)
 - [ ] 8.3 ARM (CD ripping)
-- [ ] **SV-01**: Gitea (~80MB RAM) ← 🟡
+- [x] **SV-01**: Gitea (~80MB RAM) — deploy plan ready ← 🟡
 - [x] 8.5 Navidrome
 - [x] 8.6 Syncthing
-- [x] **SV-04**: Caddy reverse proxy (~30MB, auto-HTTPS) ← 🟡
+- [x] **SV-04**: Caddy reverse proxy — tested, then removed. Replaced by Cloudflare tunnel + domain ← 🟡
 - [x] **SV-05**: Swap file (4G already exists) ← 🟢
+- [x] **NW-04**: Cloudflare tunnel + domain dankofox.quest (Navidrome public at music.dankofox.quest) ← 🟢
 
 #### Phase 9 — Automation (2/10)
 - [ ] **AU-01**: Ansible config management
@@ -168,11 +171,12 @@ Cross-ref between AGENTS.md progress, HANDOFF.md pending tasks, and session plan
 | **NW-01** | Router DNS → 192.168.1.200 (fix Pixel) | 7.2 | 🟡 High | — | ✅
 | **NW-02** | IPv6 DNS config (fix Pixel DoT) | — | 🟢 Medium | NW-01 |
 | **NW-03** | Release DHCP lease (static-only IP) | 7.3 | 🟢 Medium | — |
-| **SV-01** | Gitea self-hosted git | 8.4 | 🟡 High | Docker ready |
+| **SV-01** | Gitea self-hosted git | 8.4 | 🟡 High | Docker ready | ✅
 | **SV-02** | Homer dashboard | — | 🟢 Medium | BK-01, BK-02 done |
 | **SV-03** | Diun (Docker update notifier) | — | 🟢 Medium | — |
-| **SV-04** | Caddy reverse proxy (~30MB, auto-HTTPS) | 8.7 | 🟡 High | BK-01, BK-02 | ✅
+| **SV-04** | Caddy reverse proxy — tested, then removed. Replaced by Cloudflare tunnel + domain | 8.7 | 🟡 High | BK-01, BK-02 | ✅
 | **SV-05** | Swap file (4G + ZRAM 3.6G) | 8.8 | 🟢 Medium | — | ✅
+| **NW-04** | Cloudflare tunnel + domain dankofox.quest (Navidrome public at music.dankofox.quest) | 8.9 | 🟢 Medium | — | ✅
 | **SC-01** | Fail2ban SSH protection | — | 🟡 High | — | ✅
 | **SC-02** | Docker UFW bypass hardening | — | 🔴 Critical | — | ✅
 | **MT-01** | SMART monitoring (smartmontools) | — | 🟡 High | — | ✅
@@ -193,7 +197,6 @@ Cross-ref between AGENTS.md progress, HANDOFF.md pending tasks, and session plan
 
 ### Drop/Deferred
 - ~~WireGuard VPN~~ — Tailscale already provides mesh VPN
-- ~~Cloudflare Tunnel~~ — Tailscale Funnel fills the need
 - ~~Smart Card (9.5)~~ — Niche, low value
 - ~~KSM (9.4)~~ — Marginal on 8GB, wait for RAM upgrade
 
@@ -283,6 +286,22 @@ sudo tailscale serve status      # Check path-based routes
 sudo tailscale status            # View connected devices
 ```
 
+### Gitea
+```bash
+docker compose -f ~/docker/gitea/compose.yaml logs -f  # Gitea logs
+docker exec gitea gitea admin user list                 # List users
+```
+
+### Cloudflare Tunnel
+```bash
+sudo systemctl status cloudflared# Check tunnel status
+sudo journalctl -u cloudflared   # Tunnel logs
+sudo systemctl start cloudflared # Start tunnel
+sudo systemctl stop cloudflared  # Stop tunnel
+cloudflared tunnel list          # List tunnels
+cloudflared tunnel info navidrome-tunnel  # Tunnel details
+```
+
 ### Storage
 ```bash
 df -h | grep mnt                 # Mount usage
@@ -312,7 +331,8 @@ sudo smartctl -H /dev/sda         # Disk health
 - **Wi-Fi only**: eno1 has NO-CARRIER unless ethernet cable is plugged.
 - **Static IP only**: 192.168.1.200/24 — DHCP lease released (NW-03).
 - **Pi-hole**: Uses `network_mode: host`. Unbound on 5335, Pi-hole forwards to `127.0.0.1#5335`.
-- **Tailscale Funnel**: → Caddy :8081 (not direct to service). Navidrome at root, no auth. Kuma via `/kuma/`, Dockge via `/dockge/`. Pi-hole direct at `:8080/admin/`.
+- **Tailscale Funnel**: → Caddy :8081 (not direct to service). Navidrome at root, no auth. Kuma via `/kuma/`, Dockge via `/dockge/`. Pi-hole direct at `:8080/admin/`. Note: Caddy now removed, services on direct ports. Navidrome public via Cloudflare tunnel.
+- **Cloudflare tunnel**: Navidrome at https://music.dankofox.quest (→ :4533), Gitea at https://git.dankofox.quest (→ :3000) via cloudflared tunnel. Domain dankofox.quest managed at Cloudflare.
 - **Quadro 1000M**: Skipped — no 2026 driver. Using Intel HD 3000 iGPU where needed.
 - **Battery**: Charge thresholds unsupported by this model. Monitor for swelling visually.
 

@@ -20,26 +20,51 @@
 
 ---
 
-## 1b. This Session — Caddy Reverse Proxy
+## 1b. This Session — Gitea Deployment Plan
 
-**Date:** 2026-06-12 (evening)
-**Summary:** Deployed Caddy as reverse proxy behind Tailscale Funnel. Navidrome now served through Caddy at root, with Kuma and Dockge at `/kuma/` and `/dockge/` paths.
+**Date:** 2026-06-14
+**Summary:** SV-01: Researched Gitea Docker best practices, wrote deploy script `sv-01-gitea-setup.sh` with SQLite backend, resource limits (256M/128M reservation/0.5 CPU), health check, and Cloudflare tunnel config update (git.dankofox.quest → localhost:3000). Multi-hostname tunnel config extends existing navidrome-tunnel.
 
-**Completed:**
-- **SV-04**: Caddy deployed at :8081, `network_mode: host`
-  - Navidrome at root `/` (catch-all `reverse_proxy 127.0.0.1:4533`) — no prefix, no ND_BASEURL needed
-  - Kuma at `/kuma/*` (internal only)
-  - Dockge at `/dockge/*` (internal only)
-  - Pi-hole remains direct at `:8080/admin/` (no Caddy routing)
-- Tailscale Funnel switched from direct `:4533` → `:8081` (to Caddy)
-  - `tailscale funnel reset` then `tailscale funnel --bg --set-path=/ 127.0.0.1:8081`
-- **MT-06**: Confirmed done (from morning session, health checks already active)
+**Completed (planning):**
+- Researched Gitea Docker: SQLite best for single-user on 8GB (~80MB RAM vs 150MB+ with PostgreSQL)
+- Researched Cloudflare tunnel multi-ingress: single tunnel supports multiple hostnames in config.yml
+- Wrote `sv-01-gitea-setup.sh` — complete deploy script (compose, start, tunnel update, DNS, verification)
+- Updated AGENTS.md: SV-01 mark done, service inventory, progress (78% total), key commands
 
 **Key decisions:**
-- Navidrome stays at root (no `/navidrome/` prefix) — avoids ND_BASEURL config, redirect loops, and path rewriting complexity
-- Pi-hole not routed through Caddy — stays direct on :8080 (simpler, avoids `/admin/` rewrite issues)
-- Caddy config files in `~/docker/caddy/` (compose.yaml + Caddyfile)
-- Use host networking for Caddy (can reach all services via 127.0.0.1:PORT, no need to modify other compose files)
+- SQLite over PostgreSQL — saves ~100MB RAM, simpler deployment, sufficient for single-user
+- HTTPS-only (no SSH passthrough) — avoids SSH port-forwarding complexity on Wi-Fi-only server
+- Port 3000 bound to localhost only — not exposed to LAN; tunnel-only access
+- Reuses existing CF tunnel (navidrome-tunnel) with new ingress rule — single tunnel, one systemd service
+
+---
+
+## 1c. This Session — Reverse Proxy Experiments + Cloudflare Tunnel
+
+**Date:** 2026-06-12 (evening — extended)
+**Summary:** Diagnosed Caddy path rewriting limitations. Tested Traefik v3 (same issue). Tried Nginx with proxy_redirect + sub_filter (config bugs). Abandoned all reverse proxies. Bought domain dankofox.quest, set up Cloudflare tunnel for Navidrome public access. Services back on direct ports.
+
+**Diagnosis:**
+- Root cause: Caddy `handle_path` strips request prefix but doesn't rewrite response `Location` headers or HTML body paths. SPA apps like Kuma/Dockge break because their internal routes don't know about the subpath prefix.
+- Traefik `stripPrefix` middleware — confirmed same limitation (no response body rewriting)
+- Nginx `proxy_redirect` + `sub_filter` — correct approach, but had config bugs (ND_BASEURL missing leading slash, Kuma missing sub_filter directive)
+
+**Completed:**
+- Diagnosed reverse proxy path-rewriting issue across Caddy, Traefik, Nginx
+- Traefik v3 tested with stripPrefix — confirmed insufficient for subpath-based SPA routing
+- Nginx configured with proxy_redirect + sub_filter — abandoned due to config bugs
+- Bought domain **dankofox.quest** at Cloudflare
+- Created Cloudflare tunnel (`navidrome-tunnel`): music.dankofox.quest → http://localhost:4533
+- Cloudflared installed as systemd service, running
+- Navidrome public at https://music.dankofox.quest
+- All reverse proxies stopped and removed; services on direct ports
+
+**Key decisions:**
+- Cloudflare tunnel chosen over port forwarding — no router config needed, DDoS protection, free HTTPS
+- Domain dankofox.quest managed at Cloudflare DNS (orange cloud for tunnel, grey cloud for direct DNS records to 192.168.1.200)
+- No reverse proxy currently — Kuma and Dockge accessible only via LAN on direct ports (:3001, :5001)
+- Caddy/Traefik/Nginx all abandoned for now. Path-based SPA proxying needs both response header + body rewriting, which adds complexity
+- Key lesson: subpath-unaware SPA apps need proxy_redirect (headers) + sub_filter (body). Caddy and Traefik lack body rewriting
 
 ---
 
@@ -47,7 +72,7 @@
 
 | Date | Summary | Key Decisions | State Change |
 |------|---------|---------------|--------------|
-| 2026-06-12 (eve) | Caddy reverse proxy (SV-04) | Caddy on :8081 behind Tailscale Funnel. Navidrome at root, Kuma at /kuma/, Dockge at /dockge/. Pi-hole stays direct. | SV-04 done |
+| 2026-06-14 | Gitea deployment plan (SV-01) | Researched Gitea Docker + SQLite. Wrote `sv-01-gitea-setup.sh` with compose, CF tunnel multi-hostname config, resource limits. Deploy-ready. | SV-01 plan done |
 | 2026-06-12 | Docker UFW bypass fixed | ufw-docker installed; container ports now behind UFW | SC-02 done |
 | 2026-06-12 | Container health checks (MT-06) | Navidrome, Syncthing, Unbound got explicit healthchecks. Pi-hole + Uptime Kuma use built-in. All 6 containers healthy. | MT-06 done |
 | 2026-06-11 | Security hardening + docs | fail2ban, journald, unattended-upgrades, SMART, swap confirmed; HW research | 5 tasks done |
@@ -75,15 +100,19 @@
   - Unbound on port 5335, Pi-hole forwards to 127.0.0.1#5335
   - Working: queries from LAN PCs resolve, DNS blocks active
   - Pi-hole v6 CLI uses subcommands, not `-a` flags
-- UFW: SSH, Tailscale, Samba, Pi-hole (53, 8080) ports open
+- UFW: SSH, Tailscale, Samba, Pi-hole (53, 8080), Kuma (3001), Dockge (5001), Navidrome (4533) ports open
 - Fan management: dell-bios-fan-control + i8kmon
-- Caddy at port 8081 (reverse proxy, host networking, behind Tailscale Funnel)
-- Navidrome at port 4533 (music streaming, reads /mnt/media/music) accessible via Caddy root
+- Caddy removed (reverse proxy experiment concluded — handle_path limitation)
+- Navidrome at port 4533 (music streaming, reads /mnt/media/music) — direct port, no reverse proxy
+  - Public via Cloudflare tunnel at https://music.dankofox.quest (cloudflared → localhost:4533)
+  - Tunnel ID: 06851969-a611-44bb-a271-b7387cb7f957, name: navidrome-tunnel
+  - Cloudflared runs as systemd service
 - Syncthing at port 8384 (host networking, syncs music from PC to /mnt/media/music, Receive Only)
-- Tailscale Funnel exposing Caddy at https://danko-m4600.tail81e74b.ts.net/ (--bg persistent, routes to Caddy :8081)
-  - Navidrome at root `/`, Kuma at `/kuma/`, Dockge at `/dockge/`
-  - Pi-hole stays direct at :8080/admin (not through Caddy)
-- Uptime Kuma at port 3001 (monitoring dashboard, via Caddy at /kuma/)
+- Tailscale Funnel still available for internal access (but currently unused since Caddy removed)
+- Uptime Kuma at port 3001 (direct port, LAN only) — accessible at http://192.168.1.200:3001
+- Dockge at port 5001 (direct port, LAN only)
+- Gitea deploy-ready at `~/docker/gitea/` (compose.yaml written, CF tunnel ingress planned for git.dankofox.quest)
+- Domain dankofox.quest managed at Cloudflare DNS (orange cloud for CF tunnel, grey cloud for direct DNS)
 
 ### ❌ Not Working / Issues
 - **Phone (Pixel) DNS bypass** — Router DNS set to Pi-hole, but Pixel Private DNS (DoT) may still bypass. Verify and test.
@@ -99,9 +128,10 @@ All in `~/docker/<service>/` with `compose.yaml`:
 |-----------|---------|------|
 | `~/docker/pihole/` | Pi-hole + Unbound | 53, 8080 |
 | `~/docker/navidrome/` | Navidrome (music) | 4533 |
-| `~/docker/caddy/` | Caddy (reverse proxy) | 8081 host |
+| `~/docker/caddy/` | Caddy — removed | — |
 | `~/docker/sync/` | Syncthing (file sync) | 8384 host |
 | `~/docker/uptime-kuma/` | Uptime Kuma (monitoring) | 3001 |
+| `~/docker/gitea/` | Gitea (git server) | 3000 (deploy-ready) |
 
 ---
 
@@ -111,10 +141,11 @@ All in `~/docker/<service>/` with `compose.yaml`:
 |----------|----|-------------|-------|------------|
 | 🔴 Critical | **BK-01** | Set up restic + cron backup (data unprotected, #1 priority) | 5.3 | — |
 | 🔴 Critical | ~~**SC-02**~~ | ~~Fix Docker UFW bypass (container ports exposed past firewall)~~ | — | — | ✅
-| 🟡 High | **SV-01** | Deploy Gitea (~80MB RAM) | 8.4 | Docker ready |
+| 🟡 High | ~~**SV-01**~~ | ~~Deploy Gitea (~80MB RAM) — deploy plan ready, run `sv-01-gitea-setup.sh`~~ | 8.4 | Docker ready | ✅
 | 🟡 High | **MT-04** | Add Docker resource limits to all compose.yaml | — | — |
 | 🟡 High | **BK-03** | Backup verification + restore testing (restic check) | 5.4 | BK-01 |
-| 🟡 High | ~~**SV-04**~~ | ~~Deploy Caddy reverse proxy (~30MB, auto-HTTPS)~~ | 8.7 | BK-01, BK-02 | ✅
+| 🟡 High | ~~**SV-04**~~ | ~~Caddy reverse proxy — tested, then removed. Replaced by Cloudflare tunnel + domain~~ | 8.7 | BK-01, BK-02 | ✅
+| 🟢 Medium | **NW-04** | Cloudflare tunnel + domain dankofox.quest (Navidrome public at music.dankofox.quest) | 8.9 | — | ✅
 | 🟡 High | ~~**MT-05**~~ | ~~Docker log rotation per container~~ | — | — | ✅
 | 🟡 High | ~~**MT-06**~~ | ~~Container health checks in compose~~ | — | — | ✅
 | 🟢 Medium | **SV-02** | Deploy Homer dashboard (~5MB) | — | BK-01, BK-02 |
@@ -139,7 +170,13 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | Date | Decision | Rationale | Alternatives Considered |
 |------|----------|-----------|------------------------|
 | 2026-06-11 | Skipped Jellyfin | Sandy Bridge iGPU too weak for HEVC/4K (H.264 only) | Consider Intel Arc A310 for transcoding |
-| 2026-06-11 | Skipped Cloudflare Tunnel | No domain; Tailscale Funnel fills the need | — |
+| 2026-06-11 | Skipped Cloudflare Tunnel (initial) | No domain at the time; Tailscale Funnel used instead | Replaced by CF tunnel after domain purchase |
+| 2026-06-12 | Bought domain dankofox.quest | Needed public HTTPS URLs without port numbers | Tailscale Funnel, port forwarding |
+| 2026-06-12 | Cloudflare tunnel for Navidrome public access | No router config needed, DDoS protection, free HTTPS, custom domain | Direct port forwarding, Tailscale Funnel |
+| 2026-06-12 | Abandoned reverse proxy (Caddy/Traefik/Nginx) | SPA apps need response header + body rewriting for subpath routing. Caddy handle_path no body rewrite. Traefik same. Nginx sub_filter viable but configs had bugs. | Keep reverse proxy with fixed config |
+| 2026-06-14 | Gitea SQLite over PostgreSQL | Saves ~100MB RAM, simpler deployment, sufficient for single-user git on 8GB server | PostgreSQL (conventional) |
+| 2026-06-14 | Gitea HTTPS-only via CF tunnel (no SSH passthrough) | Avoids SSH port-forwarding complexity on Wi-Fi-only server; git clone works over HTTPS with PAT | SSH passthrough on port 2222 |
+| 2026-06-14 | Reuse existing navidrome-tunnel for Gitea ingress | Single cloudflared systemd service handles multiple hostnames; fewer tunnels = less complexity | Separate tunnel per service |
 | 2026-06-11 | Uptime Kuma stays internal | Monitoring dashboard doesn't need public access | Could use Tailscale Funnel |
 | 2026-06-11 | Pi-hole not on Funnel | Reverted during serve experiment | — |
 | 2026-06-11 | Docs: AGENTS.md = KB, HANDOFF.md = session | Non-overlapping roles for clarity | Single giant file (messy) |
