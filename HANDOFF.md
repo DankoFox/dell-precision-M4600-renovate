@@ -9,8 +9,22 @@
 
 ## 1. Last Session
 
-**Date:** 2026-06-12
-**Summary:** Docker UFW bypass fixed via ufw-docker. DHCP lease cleanup (NW-03). Docker log rotation (MT-05). Updated HANDOFF.md to reflect completions.
+**Date:** 2026-06-15
+**Summary:** Ethernet (eno1) connected and configured as primary interface. Netplan dual-interface setup with metric-based failover.
+
+**Completed this session:**
+- Connected Ethernet cable to eno1
+- Configured netplan: eno1 (static 192.168.1.200/24, metric 100) + wlp3s0 (DHCP backup, metric 600)
+- Resolved conflicting default route error using `dhcp4-overrides: route-metric`
+- Diagnosed SSH delay (was router issue, not SSH config)
+- Updated AGENTS.md with Ethernet status
+
+**Key decisions:**
+- Ethernet = primary (metric 100), Wi-Fi = automatic failover (metric 600)
+- Both interfaces active simultaneously for seamless failover
+- No manual intervention needed if Ethernet cable unplugged — traffic fails over to Wi-Fi
+
+**Previous session (2026-06-12):**
 
 **Completed this session (morning):**
 - SC-02: ufw-docker installed, DOCKER-USER chain rules active, navidrome/uptime-kuma/dockge ports behind UFW, Pi-hole host-network ports managed by UFW directly
@@ -72,6 +86,7 @@
 
 | Date | Summary | Key Decisions | State Change |
 |------|---------|---------------|--------------|
+| 2026-06-15 | Ethernet configured as primary | eno1 active (static 192.168.1.200/24, metric 100), wlp3s0 as failover (DHCP, metric 600) | Ethernet primary |
 | 2026-06-14 | Gitea deployment plan (SV-01) | Researched Gitea Docker + SQLite. Wrote `sv-01-gitea-setup.sh` with compose, CF tunnel multi-hostname config, resource limits. Deploy-ready. | SV-01 plan done |
 | 2026-06-12 | Docker UFW bypass fixed | ufw-docker installed; container ports now behind UFW | SC-02 done |
 | 2026-06-12 | Container health checks (MT-06) | Navidrome, Syncthing, Unbound got explicit healthchecks. Pi-hole + Uptime Kuma use built-in. All 6 containers healthy. | MT-06 done |
@@ -88,6 +103,8 @@
 ## 3. Current State
 
 ### ✅ Working
+- Ethernet (eno1) active: static 192.168.1.200/24, primary interface
+- Wi-Fi (wlp3s0) backup: DHCP with metric 600, automatic failover
 - LVM: vg_data with lv_storage (200G, /mnt/media) + data_lv (247G, /mnt/data)
 - Samba: [media] and [data] shares at /mnt/media and /mnt/data
 - Docker CE + docker-compose-plugin + containerd.io
@@ -133,6 +150,13 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | `~/docker/uptime-kuma/` | Uptime Kuma (monitoring) | 3001 |
 | `~/docker/gitea/` | Gitea (git server) | 3000 (deploy-ready) |
 
+**System configs:**
+| File | Service |
+|------|---------|
+| `/etc/netplan/01-netcfg.yaml` | Network (Ethernet primary + Wi-Fi backup) |
+| `/etc/samba/smb.conf` | Samba shares |
+| `/etc/cloudflared/` | Cloudflare tunnel |
+
 ---
 
 ## 5. Pending Tasks
@@ -177,6 +201,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | 2026-06-14 | Gitea SQLite over PostgreSQL | Saves ~100MB RAM, simpler deployment, sufficient for single-user git on 8GB server | PostgreSQL (conventional) |
 | 2026-06-14 | Gitea HTTPS-only via CF tunnel (no SSH passthrough) | Avoids SSH port-forwarding complexity on Wi-Fi-only server; git clone works over HTTPS with PAT | SSH passthrough on port 2222 |
 | 2026-06-14 | Reuse existing navidrome-tunnel for Gitea ingress | Single cloudflared systemd service handles multiple hostnames; fewer tunnels = less complexity | Separate tunnel per service |
+| 2026-06-15 | Ethernet as primary interface | eno1 now active with static 192.168.1.200/24; Wi-Fi wlp3s0 as automatic failover (metric 600) | Keep Wi-Fi only, use both with same metric |
 | 2026-06-11 | Uptime Kuma stays internal | Monitoring dashboard doesn't need public access | Could use Tailscale Funnel |
 | 2026-06-11 | Pi-hole not on Funnel | Reverted during serve experiment | — |
 | 2026-06-11 | Docs: AGENTS.md = KB, HANDOFF.md = session | Non-overlapping roles for clarity | Single giant file (messy) |
@@ -190,7 +215,8 @@ All in `~/docker/<service>/` with `compose.yaml`:
 
 - 8GB RAM primary bottleneck — add services incrementally
 - Quadro 1000M Fermi GPU: no 2026 drivers, skip entirely
-- Ethernet (eno1) shows NO-CARRIER — Wi-Fi (wlp3s0) only
+- Ethernet (eno1) **ACTIVE** — primary interface, static 192.168.1.200/24
+- Wi-Fi (wlp3s0) — backup/failover only, DHCP with metric 600
 - Battery charge thresholds unsupported — skipped, monitor for swelling
 - Static IP only: 192.168.1.200/24 (DHCP lease released)
 - No Ubuntu snaps — all packages via apt
@@ -231,3 +257,49 @@ All in `~/docker/<service>/` with `compose.yaml`:
 - SATA 2 caps sequential at ~300MB/s — fine for overnight backup, migrate can run while sleeping
 - If HDD has SMART reallocated sectors > 10, skip repurpose, buy fresh drive
 - Alternatives: Option A (dedicated backup disk), Option B (extend vg_data mixed HDD+SSD) documented in session log
+
+---
+
+## 9. Network Configuration Reference
+
+### Netplan Config (for reference)
+Saved at: `netplan-01-netcfg.yaml` in project root
+
+**Applied on server at:** `/etc/netplan/01-netcfg.yaml`
+
+```yaml
+network:
+  version: 2
+  renderer: NetworkManager
+
+  ethernets:
+    eno1:
+      optional: true
+      dhcp4: no
+      addresses:
+        - 192.168.1.200/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+          metric: 100          # Lower = higher priority
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8
+
+  wifis:
+    wlp3s0:
+      optional: true
+      dhcp4: yes
+      dhcp4-overrides:
+        route-metric: 600      # Higher = lower priority (backup only)
+      access-points:
+        "Bin":
+          password: "12345678"
+```
+
+**Key points:**
+- `metric: 100` on eno1 = Ethernet always preferred
+- `route-metric: 600` on wlp3s0 = Wi-Fi only used if Ethernet fails
+- Both interfaces active simultaneously for seamless failover
+- `dhcp4-overrides: route-metric` is the official netplan way to set DHCP route priority

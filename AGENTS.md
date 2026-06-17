@@ -4,7 +4,7 @@
 **Project:** Dell Precision M4600 → Enterprise-Grade Linux Home Lab Server
 **OS:** Ubuntu Server 26.04 LTS
 **User:** `danko`
-**Network:** 192.168.1.200/24 (Wi-Fi wlp3s0)
+**Network:** 192.168.1.200/24 (Ethernet eno1 primary, Wi-Fi wlp3s0 backup)
 **Tailscale:** 100.101.7.123
 
 ---
@@ -20,7 +20,7 @@
 | **Storage (Data)** | 447GB GIGABYTE SATA → LVM `vg_data` | Split: lv_storage (200G) + data_lv (247G) |
 | **Optical** | DVD-RW (9.5mm SATA) | Replaceable with caddy for 3rd drive |
 | **Wi-Fi** | Intel Centrino Advanced-N 6200 (half mini-PCIe, 802.11 a/b/g/n) | No AC — upgrade candidate |
-| **Ethernet** | Intel 82579LM Gigabit (eno1) | Shows NO-CARRIER (no cable plugged) |
+| **Ethernet** | Intel 82579LM Gigabit (eno1) | **Active** — Static 192.168.1.200/24, primary interface |
 | **Display** | 15.6" 1920×1080 (anti-glare) | Lid closed; consoleblank=60 |
 | **Chassis** | Al/Mg alloy, MIL-STD-810G | 2.8kg, durable for 24/7 |
 
@@ -258,6 +258,16 @@ sudo reboot                      # Reboot
 sudo journalctl -xe              # System log tail
 ```
 
+### Network
+```bash
+ip addr show eno1               # Check Ethernet IP
+ip addr show wlp3s0             # Check Wi-Fi IP
+ip route                        # Check routing table
+sudo netplan try                # Test netplan changes (120s timeout)
+sudo netplan apply              # Apply netplan changes
+sudo nmcli device status        # Check NetworkManager status
+```
+
 ### Services
 ```bash
 sudo systemctl status smbd       # Samba status
@@ -328,7 +338,9 @@ sudo smartctl -H /dev/sda         # Disk health
 - **No snaps**: All packages via `apt` or Docker.
 - **No Ubuntu Pro** (free tier available but not used).
 - **RAM budget**: 8GB total — each new service must be verified with `free -h`.
-- **Wi-Fi only**: eno1 has NO-CARRIER unless ethernet cable is plugged.
+- **Ethernet primary**: eno1 active with static 192.168.1.200/24, Wi-Fi wlp3s0 as automatic failover (metric 600).
+- **Static IP only**: 192.168.1.200/24 — DHCP lease released (NW-03).
+- **Netplan config**: `/etc/netplan/01-netcfg.yaml` — reference copy in project root (`netplan-01-netcfg.yaml`).
 - **Static IP only**: 192.168.1.200/24 — DHCP lease released (NW-03).
 - **Pi-hole**: Uses `network_mode: host`. Unbound on 5335, Pi-hole forwards to `127.0.0.1#5335`.
 - **Tailscale Funnel**: → Caddy :8081 (not direct to service). Navidrome at root, no auth. Kuma via `/kuma/`, Dockge via `/dockge/`. Pi-hole direct at `:8080/admin/`. Note: Caddy now removed, services on direct ports. Navidrome public via Cloudflare tunnel.
@@ -346,6 +358,7 @@ sudo smartctl -H /dev/sda         # Disk health
 | `AGENTS.md` | **← You are here** — KB, specs, inventory, todos, roadmap |
 | `HANDOFF.md` | Session handoff — current state, pending, decision log |
 | `hardware-upgrade-guide.md` | Vietnam purchase guide with pricing, sources, keywords |
+| `netplan-01-netcfg.yaml` | Network config reference (Ethernet primary + Wi-Fi backup) |
 | `phase-*.md` (9 files) | Procedural guides per phase |
 | `plan_research.md` | Deep research — thermal, LVM, hardware mods |
 

@@ -1,0 +1,28 @@
+network:
+  version: 2
+  renderer: NetworkManager
+
+  ethernets:
+    eno1:
+      optional: true
+      dhcp4: no
+      addresses:
+        - 192.168.1.200/24
+      routes:
+        - to: default
+          via: 192.168.1.1
+          metric: 100          # Lower = higher priority
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 8.8.8.8
+
+  wifis:
+    wlp3s0:
+      optional: true
+      dhcp4: yes
+      dhcp4-overrides:
+        route-metric: 600      # Higher = lower priority (backup only)
+      access-points:
+        "Bin":
+          password: "12345678"
