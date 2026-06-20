@@ -14,7 +14,7 @@
 | Component | Spec | Notes |
 |-----------|------|-------|
 | **CPU** | Intel Core i7-2860QM (4C/8T, Sandy Bridge, 2.5-3.6 GHz) | Unlocks all 4 DIMM slots |
-| **RAM** | 8GB DDR3 (2× 4GB) + ZRAM (3.6G lzo-rle) + 4G swapfile | 4× SO-DIMM slots, max 64GB per dmidecode |
+| **RAM** | 24GB DDR3 (4GB+8GB per channel) + ZRAM (3.6G lzo-rle) + 4G swapfile | 4× SO-DIMM slots, max 64GB per dmidecode — upgraded 2026-06-20 (added 2× 8GB Inmos) |
 | **GPU** | NVIDIA Quadro 1000M (Fermi) — **skipped** | No driver support in 2026; using Intel HD 3000 iGPU |
 | **Storage (OS)** | 120GB SAMSUNG PM871 mSATA → `/` | SATA III |
 | **Storage (Data)** | 447GB GIGABYTE SATA → LVM `vg_data` | Split: lv_storage (200G) + data_lv (247G) |
@@ -183,12 +183,12 @@ Cross-ref between AGENTS.md progress, HANDOFF.md pending tasks, and session plan
 | **MT-02** | Journald size limit config | — | 🟡 High | — | ✅
 | **MT-03** | unattended-upgrades (auto security) | — | 🟡 High | — | ✅
 | **MT-04** | Docker resource limits per container | — | 🟡 High | — |
-| **MT-05** | Docker log rotation per container | — | 🟡 High | — |
+| **MT-05** | Docker log rotation per container | — | 🟡 High | — | ✅
 | **MT-06** | Container health checks in compose | — | 🟡 High | — | ✅
 | **MT-07** | Docker image pinning (digest) | — | 🟢 Medium | — |
 | **AU-01** | Ansible config management | 9.1 | 🟢 Medium | — |
 | **AU-02** | Docker volume backup script | 9.2 | 🟢 Medium | BK-01 |
-| **HW-01** | RAM upgrade 16-32GB | — | ⚪ Hardware | Purchase |
+| **HW-01** | RAM upgrade 16-32GB — DONE (24GB: 4+8 per channel) | — | ⚪ Hardware | Purchase | ✅
 | **HW-02** | Ethernet cable Cat 6 | — | ⚪ Hardware | Purchase |
 | **HW-03** | Wi-Fi card → Intel AC 7260 | — | ⚪ Hardware | Purchase |
 | **HW-04** | Thermal repaste (Arctic MX-4) | 1.1 | ⚪ One-time | — |
@@ -198,7 +198,7 @@ Cross-ref between AGENTS.md progress, HANDOFF.md pending tasks, and session plan
 ### Drop/Deferred
 - ~~WireGuard VPN~~ — Tailscale already provides mesh VPN
 - ~~Smart Card (9.5)~~ — Niche, low value
-- ~~KSM (9.4)~~ — Marginal on 8GB, wait for RAM upgrade
+- ~~KSM (9.4)~~ — Marginal on 8GB, wait for RAM upgrade — 24GB now, could reconsider
 
 ---
 
@@ -240,8 +240,8 @@ Covers: RAM, Storage, Wi-Fi, CPU, GPU, Networking (USB 2.5GbE), Thermal paste, U
 | **Calibre-web** | ~100MB | Ebook library management |
 
 ### Skip for Now
-- **Ollama / Open WebUI** — Needs 16GB+ RAM
-- **Immich** — Needs 8GB+ free RAM
+- **Ollama / Open WebUI** — Needs 16GB+ RAM (possible now — 24GB, but still heavy)
+- **Immich** — Needs 8GB+ free RAM (possible now — 24GB)
 - **Nextcloud** — Syncthing covers sync needs
 - **Jellyfin** — Sandy Bridge can't transcode modern codecs
 - **Pelican (Minecraft)** — Only if you actively play
@@ -337,7 +337,7 @@ sudo smartctl -H /dev/sda         # Disk health
 - **Compose files**: All in `~/docker/<service>/compose.yaml` — modern format (no `version:` tag).
 - **No snaps**: All packages via `apt` or Docker.
 - **No Ubuntu Pro** (free tier available but not used).
-- **RAM budget**: 8GB total — each new service must be verified with `free -h`.
+- **RAM budget**: 24GB total — each new service should still be verified with `free -h`.
 - **Ethernet primary**: eno1 active with static 192.168.1.200/24, Wi-Fi wlp3s0 as automatic failover (metric 600).
 - **Static IP only**: 192.168.1.200/24 — DHCP lease released (NW-03).
 - **Netplan config**: `/etc/netplan/01-netcfg.yaml` — reference copy in project root (`netplan-01-netcfg.yaml`).

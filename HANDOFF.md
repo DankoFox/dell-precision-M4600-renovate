@@ -34,7 +34,25 @@
 
 ---
 
-## 1b. This Session — Gitea Deployment Plan
+## 1b. This Session — RAM Upgrade (24GB)
+
+**Date:** 2026-06-20
+**Summary:** Added 2× 8GB Inmos DDR3-1600 SODIMMs. Total RAM: 8GB → 24GB (4+8 per channel). Unlocked earlier deferred services (Ollama, Immich, KSM now feasible).
+
+**Completed:**
+- Installed Inmos BRAN51288G16C1600 (8GB) in ChannelA-DIMM1 + Inmos BRAN51288G16C1600L (8GB) in ChannelB-DIMM1
+- Verified via dmidecode + lshw — all 4 slots populated, 24GB total, 1600 MT/s
+- Updated AGENTS.md + HANDOFF.md with new specs
+
+**Key decisions:**
+- Mixed config (4+8 per channel) works — dual-channel still active since matching pairs per channel
+- HW-01 RAM upgrade now DONE
+- Medium-value services (Vaultwarden, Watchtower, Calibre-web) now feasible
+- Ollama/Immich reconsideration possible — still heavy but no longer blocked by RAM
+
+---
+
+## 1c. This Session — Gitea Deployment Plan
 
 **Date:** 2026-06-14
 **Summary:** SV-01: Researched Gitea Docker best practices, wrote deploy script `sv-01-gitea-setup.sh` with SQLite backend, resource limits (256M/128M reservation/0.5 CPU), health check, and Cloudflare tunnel config update (git.dankofox.quest → localhost:3000). Multi-hostname tunnel config extends existing navidrome-tunnel.
@@ -86,7 +104,7 @@
 
 | Date | Summary | Key Decisions | State Change |
 |------|---------|---------------|--------------|
-| 2026-06-15 | Ethernet configured as primary | eno1 active (static 192.168.1.200/24, metric 100), wlp3s0 as failover (DHCP, metric 600) | Ethernet primary |
+| 2026-06-20 | RAM upgrade: 8→24GB (2× Inmos 8GB added) | 4+8 per channel, dual-channel active. Ollama/Immich now feasible. HW-01 done. | 24GB — RAM bottleneck resolved |
 | 2026-06-14 | Gitea deployment plan (SV-01) | Researched Gitea Docker + SQLite. Wrote `sv-01-gitea-setup.sh` with compose, CF tunnel multi-hostname config, resource limits. Deploy-ready. | SV-01 plan done |
 | 2026-06-12 | Docker UFW bypass fixed | ufw-docker installed; container ports now behind UFW | SC-02 done |
 | 2026-06-12 | Container health checks (MT-06) | Navidrome, Syncthing, Unbound got explicit healthchecks. Pi-hole + Uptime Kuma use built-in. All 6 containers healthy. | MT-06 done |
@@ -180,7 +198,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 | 🟢 Medium | **BK-04** | Offsite backup (Backblaze B2 / rsync.net) | 5.5 | BK-01 |
 | 🟢 Medium | ~~**NW-03**~~ | ~~Release DHCP lease (keep static IP only)~~ | 7.3 | — | ✅
 | 🟢 Medium | **MT-07** | Docker image pinning (digest) | — | — |
-| ⚪ Hardware | **HW-01** | RAM upgrade 16-32GB | — | Purchase |
+| ⚪ Hardware | ~~**HW-01**~~ | ~~RAM upgrade 16-32GB~~ — DONE (24GB: 4+8 per channel) | — | Purchase | ✅
 | ⚪ Hardware | **HW-02** | Ethernet cable Cat 6 | — | Purchase |
 | ⚪ Hardware | **HW-03** | Wi-Fi card Intel AC 7260HMW | — | Purchase |
 | ⚪ Deferred | HW-04 | Thermal paste (Arctic MX-4) | — | Purchase |
@@ -213,7 +231,7 @@ All in `~/docker/<service>/` with `compose.yaml`:
 
 ## 7. Constraints
 
-- 8GB RAM primary bottleneck — add services incrementally
+- 24GB RAM (upgraded 2026-06-20: 4GB+8GB per channel, Inmos DDR3-1600) — RAM bottleneck mostly resolved
 - Quadro 1000M Fermi GPU: no 2026 drivers, skip entirely
 - Ethernet (eno1) **ACTIVE** — primary interface, static 192.168.1.200/24
 - Wi-Fi (wlp3s0) — backup/failover only, DHCP with metric 600
